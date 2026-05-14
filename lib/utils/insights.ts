@@ -1,5 +1,6 @@
 import { differenceInDays } from 'date-fns'
-import type { Transaction, Loan, Wallet } from '@/lib/db/schema'
+import type { Transaction, Wallet } from '@/lib/db/schema'
+import type { LoanWithDate } from '@/lib/queries/loans'
 import { toNumber } from './format'
 import { calcAllWalletBalances, calcMonthMetrics, previousMonth, type LegWithDirection } from './calculations'
 
@@ -18,7 +19,7 @@ type Args = {
   wallets: Wallet[]
   legs: LegWithDirection[]
   transactions: Transaction[]
-  loans: Loan[]
+  loans: LoanWithDate[]
   blueHistory: { date: string; value: number }[]
   blueNow: number | null
   totalUsd: number
@@ -33,7 +34,9 @@ export function generateInsights(args: Args): Insight[] {
   // 1. Loan aging
   for (const loan of loans) {
     if (loan.status === 'paid' || loan.status === 'written_off') continue
-    const baseDate = new Date(loan.createdAt)
+    const baseDate = loan.originDate
+      ? new Date(loan.originDate + 'T00:00:00')
+      : new Date(loan.createdAt)
     const days = differenceInDays(today, baseDate)
     if (days > 30) {
       const pending = toNumber(loan.totalAmount) - toNumber(loan.amountPaid)

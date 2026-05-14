@@ -41,7 +41,8 @@ export function LoanCard({
   const pct = total > 0 ? Math.min(100, (paid / total) * 100) : 0
   const meta = statusMeta[loan.status]
 
-  const days = differenceInDays(new Date(), new Date(loan.createdAt))
+  const baseDate = loan.originDate ? parseISO(loan.originDate) : new Date(loan.createdAt)
+  const days = differenceInDays(new Date(), baseDate)
   const overdue =
     loan.dueDate && loan.status !== 'paid' && loan.status !== 'written_off'
       ? differenceInDays(new Date(), parseISO(loan.dueDate))

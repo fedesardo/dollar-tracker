@@ -28,8 +28,10 @@ export default async function LoansPage() {
   const active = loans.filter((l) => l.status === 'active' || l.status === 'partially_paid')
   const avgDays =
     active.length > 0
-      ? active.reduce((s, l) => s + differenceInDays(new Date(), new Date(l.createdAt)), 0) /
-        active.length
+      ? active.reduce((s, l) => {
+          const base = l.originDate ? new Date(l.originDate + 'T00:00:00') : new Date(l.createdAt)
+          return s + differenceInDays(new Date(), base)
+        }, 0) / active.length
       : 0
 
   return (
