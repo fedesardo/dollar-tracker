@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { TrendingUp, type LucideIcon } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TransactionModal } from '@/components/transactions/TransactionModal'
 import type { Wallet, Loan, TransactionType } from '@/lib/db/schema'
 
 export function AnalysisEmptyState({
-  Icon,
+  icon,
   title,
   description,
   bullets,
@@ -18,7 +18,7 @@ export function AnalysisEmptyState({
   avgHistoricalRate,
   avgFeePct,
 }: {
-  Icon: LucideIcon
+  icon: React.ReactNode
   title: string
   description: string
   bullets: string[]
@@ -35,8 +35,8 @@ export function AnalysisEmptyState({
     <>
       <div className="rounded-2xl border border-dashed border-[var(--border)] bg-bg-card/50 p-6">
         <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 rounded-xl bg-bg-elevated p-3">
-            <Icon className="h-5 w-5 text-text-muted" />
+          <div className="flex-shrink-0 rounded-xl bg-bg-elevated p-3 text-text-muted [&>svg]:h-5 [&>svg]:w-5">
+            {icon}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-display text-base font-semibold text-text-primary">

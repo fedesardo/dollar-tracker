@@ -102,7 +102,7 @@ export default async function AnalysisPage() {
           />
         ) : (
           <AnalysisEmptyState
-            Icon={TrendingUp}
+            icon={<TrendingUp />}
             title="Compras de USD"
             description="Cada vez que registres una compra de pesos a dólares, esta página se va a llenar con métricas para que veas si compraste bien o caro."
             bullets={[
@@ -136,7 +136,7 @@ export default async function AnalysisPage() {
         />
       ) : (
         <AnalysisEmptyState
-          Icon={Banknote}
+          icon={<Banknote />}
           title="Costo de extracciones a físico"
           description="Cuando Flor saque dólares de Wise para tenerlos como billetes, la financiera cobra una comisión. Acá vas a ver cuánto se pierde y si están negociando bien."
           bullets={[
