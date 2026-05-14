@@ -22,8 +22,8 @@ export function YearComparison({ data, years }: { data: YearRow[]; years: number
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#50506a' }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: '#50506a' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`} />
+            <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#7878a0' }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: '#7878a0' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`} />
             <Tooltip
               cursor={{ fill: 'rgba(255,255,255,0.02)' }}
               content={({ active, payload, label }) => {
@@ -41,7 +41,7 @@ export function YearComparison({ data, years }: { data: YearRow[]; years: number
                 )
               }}
             />
-            <Legend wrapperStyle={{ fontSize: 11, color: '#8080a0' }} />
+            <Legend wrapperStyle={{ fontSize: 11, color: '#b0b0c8' }} />
             {years.map((y, i) => (
               <Bar
                 key={y}

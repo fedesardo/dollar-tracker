@@ -30,12 +30,12 @@ export function DistributionEvolution({ data }: { data: EvoStack[] }) {
             <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}

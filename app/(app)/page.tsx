@@ -30,14 +30,20 @@ export default async function DashboardPage() {
     t.legs.map((l) => ({ walletId: l.walletId, direction: l.direction, amountUsd: l.amountUsd })),
   )
   const balances = calcAllWalletBalances(wallets, allLegs)
-  const totalUsd = Array.from(balances.values()).reduce((s, v) => s + v, 0)
+  // "Disponible" = solo wallets, lo que pueden tocar/usar/invertir hoy
+  const availableUsd = Array.from(balances.values()).reduce((s, v) => s + v, 0)
+  // "Patrimonio total" = wallets + préstamos pendientes de cobro (lo que les pertenece, aunque no esté en mano)
+  const pendingLoansUsd = loans
+    .filter((l) => l.status === 'active' || l.status === 'partially_paid')
+    .reduce((s, l) => s + (toNumber(l.totalAmount) - toNumber(l.amountPaid)), 0)
+  const totalUsd = availableUsd + pendingLoansUsd
 
   const today = new Date()
   const y = today.getFullYear()
   const m = today.getMonth() + 1
   const prev = previousMonth(y, m)
 
-  // Previous-month total
+  // Mes anterior — solo wallets (los préstamos no afectan el delta del patrimonio neto)
   const prevAllLegs: LegWithDirection[] = txs
     .filter((t) => {
       const d = new Date(t.date + 'T00:00:00')
@@ -47,7 +53,10 @@ export default async function DashboardPage() {
       t.legs.map((l) => ({ walletId: l.walletId, direction: l.direction, amountUsd: l.amountUsd })),
     )
   const prevBalances = calcAllWalletBalances(wallets, prevAllLegs)
-  const prevTotal = Array.from(prevBalances.values()).reduce((s, v) => s + v, 0)
+  const prevAvailable = Array.from(prevBalances.values()).reduce((s, v) => s + v, 0)
+  // Asumimos que los préstamos pendientes del mes pasado eran similares a los de hoy
+  // (el patrimonio neto solo cambia por ingresos/egresos/fees, no por mover plata entre wallets y loans)
+  const prevTotal = prevAvailable + pendingLoansUsd
   const monthDelta = totalUsd - prevTotal
   const monthDeltaPct = prevTotal !== 0 ? (monthDelta / Math.abs(prevTotal)) * 100 : 0
 
@@ -115,14 +124,21 @@ export default async function DashboardPage() {
     totalUsd,
   })
 
-  // Quick salary prompt: day 1-15, no Flor income this month
+  // Quick salary prompt: Flor cobra el 20. Mostrar el banner desde el día 18 en adelante
+  // si no se registró el sueldo de este mes.
   const day = today.getDate()
   const florIncomeThisMonth = txsPlain.find((t) => {
     if (t.type !== 'income' || t.beneficiary !== 'flor') return false
     const d = new Date(t.date + 'T00:00:00')
     return d.getFullYear() === y && d.getMonth() + 1 === m
   })
-  const showQuickSalary = day <= 15 && !florIncomeThisMonth
+  const showQuickSalary = day >= 18 && !florIncomeThisMonth
+  // Detectar si HOY es payday exacto (día 20 o equivalente con weekend)
+  const day20DOW = new Date(y, m - 1, 20).getDay()
+  const isPaydayToday =
+    day === 20 ||
+    (day === 19 && day20DOW === 6) ||
+    (day === 21 && day20DOW === 0)
   const lastFlorIncome = txsPlain.find((t) => t.type === 'income' && t.beneficiary === 'flor')
   const florWallet = wallets.find((w) => w.owner === 'flor' && w.type === 'virtual')
   const monthName = today.toLocaleDateString('es-AR', { month: 'long' })
@@ -149,6 +165,8 @@ export default async function DashboardPage() {
     <div className="space-y-5 stagger">
       <HeroTotal
         total={totalUsd}
+        available={availableUsd}
+        pendingLoans={pendingLoansUsd}
         monthDelta={monthDelta}
         monthDeltaPct={monthDeltaPct}
         blueRate={rates.blue?.venta ?? null}
@@ -161,6 +179,7 @@ export default async function DashboardPage() {
           monthName={monthName}
           prefillAmount={lastFlorIncome ? toNumber(lastFlorIncome.amountUsd) : null}
           prefillWalletId={florWallet?.id ?? null}
+          isPaydayToday={isPaydayToday}
         />
       )}
 

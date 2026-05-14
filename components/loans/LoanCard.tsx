@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import { differenceInDays, parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { Plus, Check, Clock, AlertCircle } from 'lucide-react'
+import { Plus, Check, Clock, AlertCircle, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Amount } from '@/components/shared/Amount'
 import { TransactionModal } from '@/components/transactions/TransactionModal'
+import { deleteLoan } from '@/actions/loans'
 import type { Wallet, Loan } from '@/lib/db/schema'
 import type { LoanWithLegs } from '@/lib/queries/loans'
 import { formatDateShort, formatUSD, toNumber } from '@/lib/utils/format'
@@ -31,6 +33,8 @@ export function LoanCard({
   loans: Loan[]
 }) {
   const [open, setOpen] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const total = toNumber(loan.totalAmount)
   const paid = toNumber(loan.amountPaid)
   const pending = total - paid
@@ -122,15 +126,78 @@ export function LoanCard({
         )}
 
         {(loan.status === 'active' || loan.status === 'partially_paid') && (
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex-1"
+              onClick={() => setOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Registrar cobro
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-text-muted hover:text-accent-red flex-shrink-0"
+              title="Eliminar préstamo"
+              onClick={() => setConfirmDel(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+
+        {(loan.status === 'paid' || loan.status === 'written_off') && (
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            className="mt-4 w-full"
-            onClick={() => setOpen(true)}
+            className="mt-4 w-full text-text-muted hover:text-accent-red"
+            onClick={() => setConfirmDel(true)}
           >
-            <Plus className="h-3.5 w-3.5" />
-            Registrar cobro
+            <Trash2 className="h-3.5 w-3.5" />
+            Eliminar préstamo del historial
           </Button>
+        )}
+
+        {confirmDel && (
+          <div className="mt-3 rounded-xl border border-accent-red/20 bg-accent-red/5 p-3 space-y-2">
+            <p className="text-xs text-text-primary">
+              ¿Eliminar el préstamo a <strong>{loan.debtorName}</strong> de USD{' '}
+              {formatUSD(total)}? Se va a revertir{' '}
+              {loan.paymentLegs.length > 0
+                ? `el préstamo y los ${loan.paymentLegs.length} cobro${loan.paymentLegs.length === 1 ? '' : 's'} registrado${loan.paymentLegs.length === 1 ? '' : 's'}`
+                : 'la transacción origen y volver la plata a sus bolsillos'}
+              .
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmDel(false)}
+                disabled={deleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={async () => {
+                  setDeleting(true)
+                  const res = await deleteLoan(loan.id)
+                  setDeleting(false)
+                  if (res.success) {
+                    toast.success('Préstamo eliminado. La plata volvió a los bolsillos.')
+                  } else {
+                    toast.error(res.error)
+                  }
+                }}
+                disabled={deleting}
+              >
+                {deleting ? 'Borrando…' : 'Sí, eliminar'}
+              </Button>
+            </div>
+          </div>
         )}
 
         {loan.notes && (

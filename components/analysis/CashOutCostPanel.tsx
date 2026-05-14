@@ -1,6 +1,7 @@
 'use client'
 
 import { Bar, BarChart, CartesianGrid, Cell, Line, ComposedChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatDateShort, formatUSD } from '@/lib/utils/format'
 
 export type CashOutEntry = {
@@ -47,7 +48,13 @@ export function CashOutCostPanel({
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-bg-card p-5 space-y-4">
       <div>
-        <h3 className="font-display text-base font-semibold">Costo de extracciones</h3>
+        <h3 className="font-display text-base font-semibold flex items-center gap-1.5">
+          Costo de extracciones
+          <InfoTooltip
+            text="Cuando Flor saca dólares de Wise para tenerlos como billetes, una financiera cobra una comisión (ej: 2%). Esa plata se pierde — no va a ningún bolsillo, deja de existir. Este panel mide cuánto perdieron en total."
+            size="sm"
+          />
+        </h3>
         <p className="text-xs text-text-muted mt-0.5">
           Cada vez que sacan a físicos, una financiera se queda con un cacho.
         </p>
@@ -86,12 +93,12 @@ export function CashOutCostPanel({
             <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${v.toFixed(1)}%`}

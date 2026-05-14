@@ -1,21 +1,28 @@
+import { TrendingUp, Banknote } from 'lucide-react'
 import { getAllTransactionsWithLegs } from '@/lib/queries/transactions'
+import { getActiveWallets } from '@/lib/queries/wallets'
+import { getAllLoans } from '@/lib/queries/loans'
 import { getCurrentRates, getBlueHistory } from '@/lib/services/dolar'
 import { toNumber } from '@/lib/utils/format'
 import { AvgRateCard } from '@/components/analysis/AvgRateCard'
 import { PurchaseVsBlueChart, type PurchaseDot } from '@/components/analysis/PurchaseVsBlueChart'
 import { UsdSimulator } from '@/components/analysis/UsdSimulator'
 import { CashOutCostPanel, type CashOutEntry } from '@/components/analysis/CashOutCostPanel'
+import { AnalysisEmptyState } from '@/components/analysis/AnalysisEmptyState'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AnalysisPage() {
-  const [txs, rates, blueHistory] = await Promise.all([
+  const [txs, wallets, loans, rates, blueHistory] = await Promise.all([
     getAllTransactionsWithLegs(),
+    getActiveWallets(),
+    getAllLoans(),
     getCurrentRates(),
     getBlueHistory(365),
   ])
 
   const purchases = txs.filter((t) => t.type === 'purchase')
+  const hasPurchases = purchases.length > 0
 
   let totalArs = 0
   let totalUsd = 0
@@ -35,7 +42,6 @@ export default async function AnalysisPage() {
   const dots: PurchaseDot[] = purchases.map((p) => {
     let blueAtDate = blueByDate.get(p.date)
     if (!blueAtDate) {
-      // fall back to the closest earlier date
       const sorted = blueHistory.filter((b) => b.date <= p.date)
       blueAtDate = sorted[sorted.length - 1]?.value ?? toNumber(p.exchangeRate)
     }
@@ -50,6 +56,7 @@ export default async function AnalysisPage() {
 
   // Cash outs
   const cashOuts = txs.filter((t) => t.type === 'cash_out')
+  const hasCashOuts = cashOuts.length > 0
   const entries: CashOutEntry[] = cashOuts
     .map((t) => ({
       id: t.id,
@@ -71,7 +78,7 @@ export default async function AnalysisPage() {
   const worstPct = entries.length > 0 ? Math.max(...entries.map((e) => e.feePct)) : null
   const hypotheticalSavings =
     entries.length > 0
-      ? entries.reduce((s, e) => s + e.gross * (e.feePct - 2) / 100, 0)
+      ? entries.reduce((s, e) => s + (e.gross * (e.feePct - 2)) / 100, 0)
       : null
 
   return (
@@ -84,31 +91,66 @@ export default async function AnalysisPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AvgRateCard
-          avgRate={avgRate}
-          blueNow={rates.blue?.venta ?? null}
-          best={best}
-          worst={worst}
-          totalArs={totalArs}
-          totalUsd={totalUsd}
-        />
+        {hasPurchases ? (
+          <AvgRateCard
+            avgRate={avgRate}
+            blueNow={rates.blue?.venta ?? null}
+            best={best}
+            worst={worst}
+            totalArs={totalArs}
+            totalUsd={totalUsd}
+          />
+        ) : (
+          <AnalysisEmptyState
+            Icon={TrendingUp}
+            title="Compras de USD"
+            description="Cada vez que registres una compra de pesos a dólares, esta página se va a llenar con métricas para que veas si compraste bien o caro."
+            bullets={[
+              'Tu cotización promedio ponderada por monto',
+              'Comparación contra el blue del momento',
+              'Cuál fue tu mejor compra y cuál la peor',
+              'Total ARS gastado y USD obtenidos',
+            ]}
+            cta="Registrar primera compra"
+            wallets={wallets}
+            loans={loans}
+            initialType="purchase"
+          />
+        )}
         <UsdSimulator />
       </div>
 
-      <PurchaseVsBlueChart
-        blueLine={blueHistory.slice(-180)}
-        purchases={dots}
-      />
+      {hasPurchases && (
+        <PurchaseVsBlueChart blueLine={blueHistory.slice(-180)} purchases={dots} />
+      )}
 
-      <CashOutCostPanel
-        entries={entries}
-        totalExtracted={totalExtracted}
-        totalLost={totalLost}
-        avgFeePct={avgFeePct}
-        bestPct={bestPct}
-        worstPct={worstPct}
-        hypotheticalSavings={hypotheticalSavings}
-      />
+      {hasCashOuts ? (
+        <CashOutCostPanel
+          entries={entries}
+          totalExtracted={totalExtracted}
+          totalLost={totalLost}
+          avgFeePct={avgFeePct}
+          bestPct={bestPct}
+          worstPct={worstPct}
+          hypotheticalSavings={hypotheticalSavings}
+        />
+      ) : (
+        <AnalysisEmptyState
+          Icon={Banknote}
+          title="Costo de extracciones a físico"
+          description="Cuando Flor saque dólares de Wise para tenerlos como billetes, la financiera cobra una comisión. Acá vas a ver cuánto se pierde y si están negociando bien."
+          bullets={[
+            'Total perdido en comisiones a lo largo del tiempo',
+            'Tu comisión promedio ponderada',
+            'Mejor y peor comisión negociada',
+            'Cuánto habrías ahorrado negociando siempre al 2%',
+          ]}
+          cta="Registrar primera extracción"
+          wallets={wallets}
+          loans={loans}
+          initialType="cash_out"
+        />
+      )}
     </div>
   )
 }

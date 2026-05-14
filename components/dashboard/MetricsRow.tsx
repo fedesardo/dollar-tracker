@@ -1,5 +1,6 @@
 import { ArrowDownCircle, ArrowUpCircle, TrendingUp, PiggyBank } from 'lucide-react'
 import { Amount } from '@/components/shared/Amount'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatARS, formatPct, formatRate } from '@/lib/utils/format'
 
 type Metric = {
@@ -9,6 +10,7 @@ type Metric = {
   caption: string
   accent: 'green' | 'red' | 'yellow' | 'cyan'
   delta?: number | null
+  tooltip: string
 }
 
 export function MetricsRow({
@@ -37,6 +39,8 @@ export function MetricsRow({
       value: income,
       caption: 'Sueldo Flor + compras',
       accent: 'green',
+      tooltip:
+        'Total de dólares que entraron este mes: sueldo de Flor + compras de USD que hizo Fede con pesos.',
     },
     {
       Icon: ArrowUpCircle,
@@ -48,6 +52,8 @@ export function MetricsRow({
           : `${expenseDeltaPct >= 0 ? '▲' : '▼'} ${formatPct(expenseDeltaPct)} vs mes anterior`,
       accent: 'red',
       delta: expenseDeltaPct,
+      tooltip:
+        'Dólares que salieron este mes para gastos. Comparado contra el mismo cálculo del mes anterior.',
     },
     {
       Icon: TrendingUp,
@@ -57,6 +63,8 @@ export function MetricsRow({
         ? `${formatARS(purchaseArs)} → cot. ${formatRate(avgRate)}`
         : `${formatARS(purchaseArs)}`,
       accent: 'yellow',
+      tooltip:
+        'Dólares conseguidos este mes a cambio de pesos. La cotización es el promedio ponderado de todas las compras del mes.',
     },
     {
       Icon: PiggyBank,
@@ -67,6 +75,8 @@ export function MetricsRow({
           ? 'sin promedio'
           : `Promedio 6m: ${avgNetSavings >= 0 ? '+' : ''}${avgNetSavings.toFixed(0)} USD`,
       accent: 'cyan',
+      tooltip:
+        'Ingresos + Compras − Egresos − Comisiones de extracción. Lo que efectivamente sumó el patrimonio en el mes. El promedio te dice si este mes fue mejor o peor que lo habitual.',
     },
   ]
 
@@ -82,6 +92,7 @@ export function MetricsRow({
             <span className="text-[10px] uppercase tracking-wider text-text-muted">
               {m.label}
             </span>
+            <InfoTooltip text={m.tooltip} size="xs" className="ml-auto" />
           </div>
           <div className="mt-2">
             <Amount value={m.value} size="md" showPrefix={false} positiveColor={false} />

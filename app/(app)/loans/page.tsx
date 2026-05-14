@@ -3,6 +3,7 @@ import { HandCoins } from 'lucide-react'
 import { getActiveWallets } from '@/lib/queries/wallets'
 import { getLoansWithDetails, getAllLoans } from '@/lib/queries/loans'
 import { LoanCard } from '@/components/loans/LoanCard'
+import { LoansHeaderActions } from '@/components/loans/LoansHeaderActions'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Amount } from '@/components/shared/Amount'
 import { toNumber } from '@/lib/utils/format'
@@ -33,11 +34,14 @@ export default async function LoansPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-2xl sm:text-3xl font-bold">Préstamos</h1>
-        <p className="text-sm text-text-muted mt-1">
-          Plata que les deben. Y los días que pasan.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold">Préstamos</h1>
+          <p className="text-sm text-text-muted mt-1">
+            Plata que les deben. Y los días que pasan.
+          </p>
+        </div>
+        <LoansHeaderActions wallets={wallets} loans={allLoans} />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatUSD } from '@/lib/utils/format'
 
 export type ProjectionPoint = {
@@ -36,7 +37,13 @@ export function ProjectionChart({
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-bg-card p-5">
       <div className="flex items-baseline justify-between mb-1 flex-wrap gap-2">
-        <h3 className="font-display text-base font-semibold">Proyección</h3>
+        <h3 className="font-display text-base font-semibold flex items-center gap-1.5">
+          Proyección
+          <InfoTooltip
+            text="Si seguís ahorrando al ritmo de los últimos 6 meses, así crecería el patrimonio en los próximos 12. La banda violeta clarito es la incertidumbre — cuanto más lejos, más amplia."
+            size="sm"
+          />
+        </h3>
         <p className="text-xs text-text-muted">
           A este ritmo: {monthlyDelta >= 0 ? '+' : '−'}USD {Math.abs(monthlyDelta).toFixed(0)}{' '}
           / mes
@@ -61,12 +68,12 @@ export function ProjectionChart({
             <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}

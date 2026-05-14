@@ -16,9 +16,9 @@ export function SavingsRateChart({ data, average }: { data: SavingsRow[]; averag
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#50506a' }} tickLine={false} axisLine={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#7878a0' }} tickLine={false} axisLine={false} />
             <YAxis
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${v.toFixed(0)}%`}

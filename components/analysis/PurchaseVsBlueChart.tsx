@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatARS, formatRate } from '@/lib/utils/format'
 
 export type PurchaseDot = {
@@ -51,7 +52,13 @@ export function PurchaseVsBlueChart({
 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-bg-card p-5">
-      <h3 className="font-display text-base font-semibold mb-1">Compras vs Blue</h3>
+      <h3 className="font-display text-base font-semibold mb-1 flex items-center gap-1.5">
+        Compras vs Blue
+        <InfoTooltip
+          text="La línea amarilla es la cotización blue diaria. Cada punto es una compra de USD que hiciste. Si está por debajo de la línea = compraste más barato que el blue del día. Si está arriba = pagaste de más."
+          size="sm"
+        />
+      </h3>
       <p className="text-xs text-text-muted mb-4">
         Verde = compraste por debajo del blue · Rojo = compraste por encima
       </p>
@@ -61,13 +68,13 @@ export function PurchaseVsBlueChart({
             <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: string) => v.slice(5)}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#50506a' }}
+              tick={{ fontSize: 10, fill: '#7878a0' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`}

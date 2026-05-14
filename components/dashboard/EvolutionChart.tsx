@@ -14,6 +14,7 @@ import {
   ComposedChart,
 } from 'recharts'
 import type { Wallet } from '@/lib/db/schema'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatUSD, formatRate } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
 
@@ -37,7 +38,13 @@ export function EvolutionChart({
     <div className="rounded-2xl border border-[var(--border)] bg-bg-card p-5">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
-          <h3 className="font-display text-base font-semibold">Evolución</h3>
+          <h3 className="font-display text-base font-semibold flex items-center gap-1.5">
+            Evolución
+            <InfoTooltip
+              text="Cómo creció (o cayó) el patrimonio total mes a mes. La línea amarilla punteada es la cotización del blue al cierre del mes — sirve para ver si el dólar subió o bajó respecto al ahorro."
+              size="sm"
+            />
+          </h3>
           <p className="text-xs text-text-muted">Saldo total mes a mes</p>
         </div>
         <div className="flex items-center gap-1 rounded-full bg-bg-elevated p-1 text-xs">
@@ -79,15 +86,15 @@ export function EvolutionChart({
               <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis
                 dataKey="label"
-                stroke="#50506a"
-                tick={{ fontSize: 11, fill: '#50506a' }}
+                stroke="#7878a0"
+                tick={{ fontSize: 11, fill: '#7878a0' }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 yAxisId="left"
-                stroke="#50506a"
-                tick={{ fontSize: 11, fill: '#50506a' }}
+                stroke="#7878a0"
+                tick={{ fontSize: 11, fill: '#7878a0' }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
@@ -125,14 +132,14 @@ export function EvolutionChart({
               <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis
                 dataKey="label"
-                stroke="#50506a"
-                tick={{ fontSize: 11, fill: '#50506a' }}
+                stroke="#7878a0"
+                tick={{ fontSize: 11, fill: '#7878a0' }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="#50506a"
-                tick={{ fontSize: 11, fill: '#50506a' }}
+                stroke="#7878a0"
+                tick={{ fontSize: 11, fill: '#7878a0' }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}

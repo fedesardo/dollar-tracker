@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatARS, formatRate, formatUSD, formatDateShort } from '@/lib/utils/format'
 
 export function AvgRateCard({
@@ -45,8 +46,12 @@ export function AvgRateCard({
 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-bg-card p-6">
-      <p className="text-[10px] uppercase tracking-widest text-text-muted">
+      <p className="text-[10px] uppercase tracking-widest text-text-muted flex items-center gap-1.5">
         Tu costo promedio (ponderado)
+        <InfoTooltip
+          text="Promedio ponderado por monto: una compra grande pesa más que una chica. Si compraste USD 1000 a $1000 y USD 100 a $2000, tu promedio es $1090 (no $1500)."
+          size="xs"
+        />
       </p>
       <p className="mt-2 font-mono tabular-nums text-4xl text-text-primary">
         {formatRate(avgRate)}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRates } from '@/components/shared/BlueRateBadge'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatARS, formatRate } from '@/lib/utils/format'
 
 export function ArsValuePanel({ totalUsd }: { totalUsd: number }) {
@@ -13,7 +14,13 @@ export function ArsValuePanel({ totalUsd }: { totalUsd: number }) {
   ]
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-bg-card p-5">
-      <h3 className="font-display text-base font-semibold mb-1">Valor en ARS</h3>
+      <h3 className="font-display text-base font-semibold mb-1 flex items-center gap-1.5">
+        Valor en ARS
+        <InfoTooltip
+          text="Si vendieras todos los USD al tipo elegido, te quedan tantos pesos. Blue es el informal, Oficial el de banco, MEP/CCL son legales para inversores. Da una idea de poder de compra real."
+          size="sm"
+        />
+      </h3>
       <p className="text-xs text-text-muted mb-4">
         Cuánto vale tu portfolio según con qué cotices.
       </p>

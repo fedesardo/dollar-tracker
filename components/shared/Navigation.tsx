@@ -10,6 +10,7 @@ import {
   Wallet,
   BarChart3,
   Target,
+  Settings,
   LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -23,6 +24,7 @@ const items = [
   { href: '/portfolio', label: 'Portfolio', Icon: Wallet },
   { href: '/stats', label: 'Stats', Icon: BarChart3 },
   { href: '/goals', label: 'Metas', Icon: Target },
+  { href: '/settings', label: 'Config', Icon: Settings },
 ]
 
 export function SidebarNav() {

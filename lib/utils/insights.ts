@@ -151,8 +151,8 @@ export function generateInsights(args: Args): Insight[] {
 
   // 6. Milestone
   {
-    const milestone = Math.floor(totalUsd / 5000) * 5000
-    if (milestone >= 5000) {
+    const milestone = Math.floor(totalUsd / 3000) * 3000
+    if (milestone >= 3000) {
       out.push({
         id: `milestone-${milestone}`,
         kind: 'celebration',
@@ -164,26 +164,52 @@ export function generateInsights(args: Args): Insight[] {
     }
   }
 
-  // 7. Day > 15 and no Flor income this month
+  // 7. Payday de Flor — Flor cobra el 20 (o día hábil cercano)
   {
-    const day = today.getDate()
-    if (day > 15) {
-      const y = today.getFullYear()
-      const m = today.getMonth() + 1
-      const florIncome = transactions.find((t) => {
-        if (t.type !== 'income') return false
-        if (t.beneficiary !== 'flor') return false
-        const d = new Date(t.date + 'T00:00:00')
-        return d.getFullYear() === y && d.getMonth() + 1 === m
-      })
-      if (!florIncome) {
-        const monthName = today.toLocaleDateString('es-AR', { month: 'long' })
+    const y = today.getFullYear()
+    const m = today.getMonth() + 1
+    const florIncome = transactions.find((t) => {
+      if (t.type !== 'income') return false
+      if (t.beneficiary !== 'flor') return false
+      const d = new Date(t.date + 'T00:00:00')
+      return d.getFullYear() === y && d.getMonth() + 1 === m
+    })
+    if (!florIncome) {
+      const status = paydayStatus(today)
+      const monthName = today.toLocaleDateString('es-AR', { month: 'long' })
+      if (status === 'today') {
         out.push({
-          id: 'flor-salary',
-          kind: 'warning',
+          id: 'flor-payday-today',
+          kind: 'celebration',
+          icon: 'PartyPopper',
+          title: '¡Hoy es día de cobro!',
+          message: 'Flor cobra el sueldo de este mes. No te olvides de registrarlo.',
+          emoji: '💰',
+        })
+      } else if (status === 'tomorrow') {
+        out.push({
+          id: 'flor-payday-tomorrow',
+          kind: 'info',
           icon: 'Calendar',
+          title: 'Mañana cobra Flor',
+          message: 'Avisale al asistente cuando lo tengas y lo cargás en 2 taps.',
+        })
+      } else if (status === 'this-week') {
+        out.push({
+          id: 'flor-payday-week',
+          kind: 'info',
+          icon: 'Calendar',
+          title: 'Se viene el 20',
+          message: 'En estos días Flor cobra. Tené el monto a mano.',
+        })
+      } else if (status === 'overdue') {
+        const daysLate = today.getDate() - 20
+        out.push({
+          id: 'flor-payday-late',
+          kind: 'warning',
+          icon: 'AlertTriangle',
           title: 'Sueldo de Flor pendiente',
-          message: `Flor no registró el sueldo de ${monthName}. ¿Se olvidaron?`,
+          message: `Ya van ${daysLate} ${daysLate === 1 ? 'día' : 'días'} del 20 y no registraron el sueldo de ${monthName}. ¿Se olvidaron?`,
         })
       }
     }
@@ -191,4 +217,38 @@ export function generateInsights(args: Args): Insight[] {
 
   // Cap at 3
   return out.slice(0, 3)
+}
+
+/**
+ * Determina el estado del payday de Flor (cobra el 20 de cada mes).
+ * Si el 20 cae sábado, considera el viernes 19 también como "payday today".
+ * Si el 20 cae domingo, considera el lunes 21 también como "payday today".
+ */
+type PaydayStatus = 'this-week' | 'tomorrow' | 'today' | 'overdue' | 'none'
+
+function paydayStatus(today: Date): PaydayStatus {
+  const day = today.getDate()
+  const dayOfWeek = today.getDay() // 0=dom, 6=sáb
+  const day20 = new Date(today.getFullYear(), today.getMonth(), 20)
+  const day20DOW = day20.getDay()
+
+  // Hoy es 20 — es el día estrella siempre
+  if (day === 20) return 'today'
+
+  // Si el 20 cae sábado, viernes 19 también cuenta como "today"
+  if (day === 19 && day20DOW === 6) return 'today'
+
+  // Si el 20 cae domingo, lunes 21 también cuenta como "today"
+  if (day === 21 && day20DOW === 0) return 'today'
+
+  // Mañana es 20
+  if (day === 19 && day20DOW !== 6) return 'tomorrow'
+
+  // Esta semana se viene el 20 (días 15-18 si no quedó en otros buckets)
+  if (day >= 15 && day <= 18) return 'this-week'
+
+  // Ya pasó el 20 (entre 21-31, salvo el caso del lunes post fin de semana)
+  if (day > 20 && !(day === 21 && day20DOW === 0)) return 'overdue'
+
+  return 'none'
 }

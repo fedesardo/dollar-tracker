@@ -14,8 +14,8 @@ export default async function AppShellLayout({ children }: { children: React.Rea
         <header className="sticky top-0 z-30 bg-bg-base/80 backdrop-blur-xl border-b border-[var(--border)]">
           <div className="flex items-center justify-between px-4 sm:px-6 py-3">
             <div className="lg:hidden font-display text-lg font-bold">finanzas</div>
-            <div className="hidden lg:block text-xs text-text-muted">
-              Hola, {session.user.name?.split(' ')[0] ?? 'che'}.
+            <div className="hidden lg:block text-sm text-text-secondary">
+              Hola, <span className="text-text-primary font-medium">{session.user.name?.split(' ')[0] ?? 'che'}</span>.
             </div>
             <div className="flex items-center gap-2">
               <BlueRateBadge />

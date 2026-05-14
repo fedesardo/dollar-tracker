@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, X, Filter } from 'lucide-react'
+import { Search, X, Filter, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -209,6 +209,9 @@ export function TransactionList({
           </div>
         ) : (
           <div className="space-y-6">
+            <p className="text-[11px] text-text-muted">
+              Tocá cualquier fila para ver el detalle o eliminarla.
+            </p>
             {groups.map((g) => (
               <div key={g.label}>
                 <div className="flex items-center gap-3 mb-2">
@@ -295,9 +298,11 @@ function Row({
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full px-4 py-3 flex items-center gap-3 hover:bg-bg-elevated/40 transition-colors text-left',
+        'group w-full px-4 py-3 flex items-center gap-3 cursor-pointer text-left',
+        'hover:bg-bg-elevated/60 transition-colors',
         !isLast && 'border-b border-[var(--border)]',
       )}
+      title="Ver detalle, editar o eliminar"
     >
       <div className="text-[11px] text-text-muted w-12 flex-shrink-0 font-mono tabular-nums">
         {formatDateShort(tx.date)}
@@ -306,7 +311,9 @@ function Row({
         <TransactionBadge type={tx.type} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-text-primary truncate">{tx.description}</p>
+        <p className="text-sm text-text-primary truncate group-hover:text-white transition-colors">
+          {tx.description}
+        </p>
         <p className="text-[11px] text-text-muted truncate">{involvedWallets}</p>
       </div>
       <div
@@ -326,6 +333,7 @@ function Row({
           </Badge>
         )}
       </div>
+      <ChevronRight className="h-4 w-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
     </button>
   )
 }

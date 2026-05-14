@@ -1,6 +1,7 @@
 'use client'
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatUSD } from '@/lib/utils/format'
 
 export type DistributionSlice = {
@@ -13,7 +14,13 @@ export type DistributionSlice = {
 export function DistributionChart({ slices, lostFees }: { slices: DistributionSlice[]; lostFees: number }) {
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-bg-card p-5">
-      <h3 className="font-display text-base font-semibold mb-1">Distribución actual</h3>
+      <h3 className="font-display text-base font-semibold mb-1 flex items-center gap-1.5">
+        Distribución actual
+        <InfoTooltip
+          text="Cómo se reparte tu plata por tipo de bolsillo. Virtual = cuentas digitales (Wise, Santander). Físico = billetes. Pendiente = préstamos sin cobrar. Lo ideal: poco efectivo, poco pendiente."
+          size="sm"
+        />
+      </h3>
       <p className="text-xs text-text-muted mb-4">Dónde está la plata.</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="h-52">

@@ -23,7 +23,7 @@ export function BlueRateBadge() {
     return () => clearInterval(id)
   }, [])
 
-  if (!rates?.blue) {
+  if (!rates) {
     return (
       <div className="hidden sm:flex items-center gap-2 rounded-full border border-[var(--border)] bg-bg-elevated px-3 py-1.5 text-xs text-text-muted">
         <TrendingUp className="h-3.5 w-3.5" />
@@ -33,11 +33,48 @@ export function BlueRateBadge() {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-bg-elevated px-3 py-1.5 text-xs">
-      <TrendingUp className="h-3.5 w-3.5 text-accent-yellow" />
-      <span className="text-text-muted uppercase tracking-wider hidden sm:inline">Blue</span>
+    <div
+      className="flex items-center gap-1 rounded-full border border-[var(--border)] bg-bg-elevated text-xs"
+      title="Cotizaciones de dolarapi.com — actualizadas cada 5 minutos"
+    >
+      {rates.blue && (
+        <RatePill
+          label="Blue"
+          value={rates.blue.venta}
+          color="text-accent-yellow"
+        />
+      )}
+      {rates.oficial && (
+        <>
+          <span className="text-text-muted/40">·</span>
+          <RatePill
+            label="Oficial"
+            value={rates.oficial.venta}
+            color="text-accent-blue"
+          />
+        </>
+      )}
+    </div>
+  )
+}
+
+function RatePill({
+  label,
+  value,
+  color,
+}: {
+  label: string
+  value: number
+  color: string
+}) {
+  return (
+    <div className="flex items-center gap-1.5 px-3 py-1.5">
+      <TrendingUp className={`h-3.5 w-3.5 ${color}`} />
+      <span className="text-text-secondary uppercase tracking-wider hidden sm:inline">
+        {label}
+      </span>
       <span className="font-mono tabular-nums text-text-primary">
-        {formatRate(rates.blue.venta)}
+        {formatRate(value)}
       </span>
     </div>
   )

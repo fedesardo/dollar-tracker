@@ -5,6 +5,7 @@ import { Calculator } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRates } from '@/components/shared/BlueRateBadge'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatARS, formatRate, formatUSD } from '@/lib/utils/format'
 
 export function UsdSimulator() {
@@ -28,6 +29,11 @@ export function UsdSimulator() {
       <div className="flex items-center gap-2 mb-3">
         <Calculator className="h-4 w-4 text-accent-cyan" />
         <h3 className="font-display text-base font-semibold">Simulador de compra</h3>
+        <InfoTooltip
+          text="Ingresá un monto en pesos y te calcula cuántos USD obtenés según cada cotización (Blue, Oficial, MEP, CCL). No guarda nada, es solo para tantear antes de comprar."
+          size="sm"
+          className="ml-auto"
+        />
       </div>
       <div className="space-y-1.5 mb-4">
         <Label>¿Cuántos pesos tenés?</Label>
