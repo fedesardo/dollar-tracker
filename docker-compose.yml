@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dollar-tracker-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: finanzas
+      POSTGRES_PASSWORD: finanzas
+      POSTGRES_DB: finanzas
+    ports:
+      # Puerto 5432 lo usa fedesardo.com, 5434 liclarroza.com, 5435 borgianas
+      - "5436:5432"
+    volumes:
+      - dollar-tracker-data:/var/lib/postgresql/data
+
+volumes:
+  dollar-tracker-data:
