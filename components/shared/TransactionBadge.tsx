@@ -15,7 +15,7 @@ const meta: Record<TransactionType, {
   variant: 'green' | 'red' | 'blue' | 'yellow' | 'orange' | 'purple'
   Icon: React.ComponentType<{ className?: string }>
 }> = {
-  income: { label: 'Sueldo', variant: 'green', Icon: ArrowDownCircle },
+  income: { label: 'Ingreso', variant: 'green', Icon: ArrowDownCircle },
   expense: { label: 'Egreso', variant: 'red', Icon: ArrowUpCircle },
   purchase: { label: 'Compra USD', variant: 'yellow', Icon: TrendingUp },
   transfer: { label: 'Transferencia', variant: 'blue', Icon: ArrowLeftRight },

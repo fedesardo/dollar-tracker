@@ -15,7 +15,7 @@ import type { Wallet, Loan, TransactionType } from '@/lib/db/schema'
 import { cn } from '@/lib/utils/cn'
 
 const types: { type: TransactionType; label: string }[] = [
-  { type: 'income', label: 'Sueldo' },
+  { type: 'income', label: 'Ingreso' },
   { type: 'purchase', label: 'Compra USD' },
   { type: 'expense', label: 'Egreso' },
   { type: 'transfer', label: 'Transferencia' },
