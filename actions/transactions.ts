@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import {
   incomeSchema,
+  updateIncomeSchema,
   expenseSchema,
   purchaseSchema,
   transferSchema,
@@ -14,6 +15,7 @@ import {
   loanOutSchema,
   loanInSchema,
   type IncomeInput,
+  type UpdateIncomeInput,
   type ExpenseInput,
   type PurchaseInput,
   type TransferInput,
@@ -50,7 +52,7 @@ export async function createIncome(input: IncomeInput): Promise<ActionResult<{ i
         .values({
           date: data.date,
           type: 'income',
-          description: data.beneficiary === 'flor' ? 'Sueldo Flor' : 'Ingreso Fede',
+          description: data.description?.trim() || (data.beneficiary === 'flor' ? 'Sueldo Flor' : 'Ingreso Fede'),
           amountUsd: data.amountUsd.toFixed(2),
           beneficiary: data.beneficiary,
           notes: data.notes ?? null,
@@ -69,6 +71,44 @@ export async function createIncome(input: IncomeInput): Promise<ActionResult<{ i
 
     revalidateAll()
     return { success: true, data: { id: result.id } }
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Error desconocido' }
+  }
+}
+
+export async function updateIncome(input: UpdateIncomeInput): Promise<ActionResult> {
+  try {
+    await requireUser()
+    const data = updateIncomeSchema.parse(input)
+
+    await db.transaction(async (tx) => {
+      const [target] = await tx.select().from(transactions).where(eq(transactions.id, data.id))
+      if (!target) throw new Error('Transacción no encontrada')
+      if (target.type !== 'income') throw new Error('Solo se pueden editar ingresos')
+
+      await tx
+        .update(transactions)
+        .set({
+          date: data.date,
+          description: data.description?.trim() || (data.beneficiary === 'flor' ? 'Sueldo Flor' : 'Ingreso Fede'),
+          amountUsd: data.amountUsd.toFixed(2),
+          beneficiary: data.beneficiary,
+          notes: data.notes ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(transactions.id, data.id))
+
+      await tx.delete(transactionLegs).where(eq(transactionLegs.transactionId, data.id))
+      await tx.insert(transactionLegs).values({
+        transactionId: data.id,
+        walletId: data.walletId,
+        direction: 'in',
+        amountUsd: data.amountUsd.toFixed(2),
+      })
+    })
+
+    revalidateAll()
+    return { success: true }
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : 'Error desconocido' }
   }

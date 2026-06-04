@@ -24,15 +24,21 @@ export const moneySchema = z
 
 export const optionalNotes = z.string().max(500).optional().nullable()
 
-// Income — sueldo
+// Income — sueldo u otro ingreso
 export const incomeSchema = z.object({
   date: dateSchema,
   beneficiary: ownerSchema,
   amountUsd: moneySchema,
   walletId: z.string().uuid(),
+  description: z.string().max(200).optional().nullable(),
   notes: optionalNotes,
 })
 export type IncomeInput = z.infer<typeof incomeSchema>
+
+export const updateIncomeSchema = incomeSchema.extend({
+  id: z.string().uuid(),
+})
+export type UpdateIncomeInput = z.infer<typeof updateIncomeSchema>
 
 // Purchase — compra USD
 export const purchaseSchema = z.object({
