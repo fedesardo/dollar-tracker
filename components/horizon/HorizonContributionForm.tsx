@@ -21,9 +21,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatARS } from '@/lib/utils/format'
 
 const today = () => new Date().toISOString().slice(0, 10)
+// Estado 531 (julio de 2026): cuotas sociales + FAS + administración +
+// A.M.A.C. + otros conceptos. Horizonte los actualiza junto con la vivienda.
+const LAST_KNOWN_PERIOD_EXPENSES = '50069.87'
 
 export function HorizonContributionForm({
   open,
@@ -33,9 +37,8 @@ export function HorizonContributionForm({
   onOpenChange: (open: boolean) => void
 }) {
   const [paidOn, setPaidOn] = useState(today)
-  const [creditedOn, setCreditedOn] = useState('')
   const [gross, setGross] = useState('')
-  const [expenses, setExpenses] = useState('')
+  const [expenses, setExpenses] = useState(LAST_KNOWN_PERIOD_EXPENSES)
   const [method, setMethod] = useState<'transfer' | 'cash'>('transfer')
   const [transferFrom, setTransferFrom] = useState('Santander Fede')
   const [receipt, setReceipt] = useState('')
@@ -52,9 +55,8 @@ export function HorizonContributionForm({
 
   const reset = () => {
     setPaidOn(today())
-    setCreditedOn('')
     setGross('')
-    setExpenses('')
+    setExpenses(LAST_KNOWN_PERIOD_EXPENSES)
     setMethod('transfer')
     setTransferFrom('Santander Fede')
     setReceipt('')
@@ -72,7 +74,6 @@ export function HorizonContributionForm({
     setSubmitting(true)
     const result = await createHorizonContribution({
       paidOn,
-      creditedOn: creditedOn || null,
       grossAmountArs: grossNumber,
       expensesAmountArs: expensesNumber,
       housingAmountArs: housingAmount,
@@ -104,26 +105,18 @@ export function HorizonContributionForm({
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="horizon-paid-on">¿Cuándo pagaste?</Label>
-              <Input
-                id="horizon-paid-on"
-                type="date"
-                value={paidOn}
-                onChange={(event) => setPaidOn(event.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="horizon-credited-on">¿Cuándo se acreditó?</Label>
-              <Input
-                id="horizon-credited-on"
-                type="date"
-                value={creditedOn}
-                onChange={(event) => setCreditedOn(event.target.value)}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="horizon-paid-on">¿Cuándo pagaste?</Label>
+            <Input
+              id="horizon-paid-on"
+              type="date"
+              value={paidOn}
+              onChange={(event) => setPaidOn(event.target.value)}
+              required
+            />
+            <p className="text-[11px] text-text-muted">
+              Usamos esta fecha para registrar el aporte y la antigüedad del mes.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -143,7 +136,13 @@ export function HorizonContributionForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="horizon-expenses">Gastos del período</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="horizon-expenses">Gastos del período (estimados)</Label>
+                <InfoTooltip
+                  size="xs"
+                  text="Autocompletado con $50.069,87 del Estado 531: cuotas sociales, FAS, administración, A.M.A.C. y otros. Es editable porque Horizonte los actualiza junto con el valor de la vivienda."
+                />
+              </div>
               <Input
                 id="horizon-expenses"
                 type="number"

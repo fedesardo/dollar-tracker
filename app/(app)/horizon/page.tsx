@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { HorizonActions } from '@/components/horizon/HorizonActions'
 import { HorizonContributionHistory } from '@/components/horizon/HorizonContributionHistory'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -70,8 +71,12 @@ export default async function HorizonPage() {
           <div>
             <div className="flex items-center gap-2 text-text-secondary">
               <House className="h-4 w-4 text-accent-purple" />
-              <span className="text-xs uppercase tracking-wider">
+              <span className="flex items-center gap-1 text-xs uppercase tracking-wider">
                 Objetivo {plan.targetTypology} · {plan.targetLotSqm} m²
+                <InfoTooltip
+                  size="xs"
+                  text="Es la B68 de 2 dormitorios con lote largo de 250 m² que quieren elegir al adjudicar. La cooperativa hace la conversión oficial en ese momento."
+                />
               </span>
             </div>
             <div className="flex flex-wrap items-end gap-x-4 gap-y-1 mt-4">
@@ -87,16 +92,24 @@ export default async function HorizonPage() {
             />
             <div className="grid grid-cols-2 gap-4 mt-5">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-muted">
+                <p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-text-muted">
                   Tenemos actualizado
+                  <InfoTooltip
+                    size="xs"
+                    text="Es el valor de hoy del porcentaje que ya tienen cancelado, usando el precio vigente de su plan actual D30."
+                  />
                 </p>
                 <p className="font-mono tabular-nums text-base sm:text-xl text-text-primary mt-1">
                   {formatARS(metrics.updatedCapitalArs)}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-muted">
+                <p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-text-muted">
                   Nos falta
+                  <InfoTooltip
+                    size="xs"
+                    text="Es la diferencia entre el valor vigente de la B68 elegida y el capital actualizado que ya tienen. Cambia cuando Horizonte actualiza su lista."
+                  />
                 </p>
                 <p className="font-mono tabular-nums text-base sm:text-xl text-accent-purple mt-1">
                   {formatARS(metrics.remainingArs)}
@@ -106,8 +119,12 @@ export default async function HorizonPage() {
           </div>
 
           <div className="rounded-2xl border border-[var(--border)] bg-bg-elevated/70 p-5">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted">
+            <p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-text-muted">
               Vivienda elegida
+              <InfoTooltip
+                size="xs"
+                text="Es el objetivo que usamos para proyectar el avance. La elección definitiva depende de la adjudicación y de la disponibilidad de lotes largos."
+              />
             </p>
             <p className="font-display text-xl font-semibold mt-2">
               Standard · 2 dormitorios
@@ -116,8 +133,12 @@ export default async function HorizonPage() {
               Lote largo de 250 m², sujeto a disponibilidad del barrio.
             </p>
             <div className="border-t border-[var(--border)] mt-4 pt-4">
-              <p className="text-[10px] uppercase tracking-wider text-text-muted">
+              <p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-text-muted">
                 Valor vigente
+                <InfoTooltip
+                  size="xs"
+                  text="Último precio de lista cargado para la B68/0/L. Actualizalo cuando tengan una lista nueva de Horizonte."
+                />
               </p>
               <p className="font-mono tabular-nums text-lg mt-1">
                 {formatARS(metrics.targetValueArs)}
@@ -136,7 +157,13 @@ export default async function HorizonPage() {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-text-muted">Plan actual</p>
+              <p className="flex items-center gap-1 text-xs text-text-muted">
+                Plan actual
+                <InfoTooltip
+                  size="xs"
+                  text="Es el porcentaje cancelado en su plan D30/0/D. Cada aporte a vivienda compra un porcentaje; ese porcentaje se mantiene aunque suba el valor de la casa."
+                />
+              </p>
               <Target className="h-4 w-4 text-accent-blue" />
             </div>
             <p className="font-display text-3xl font-bold mt-3">
@@ -156,7 +183,13 @@ export default async function HorizonPage() {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-text-muted">Puntaje actual Horizonte</p>
+              <p className="flex items-center gap-1 text-xs text-text-muted">
+                Puntaje actual Horizonte
+                <InfoTooltip
+                  size="xs"
+                  text="Horizonte calcula 1,5 puntos por cada mes con aporte al día, más 2 puntos por cada porcentaje cancelado del plan actual."
+                />
+              </p>
               <Sparkles className="h-4 w-4 text-accent-yellow" />
             </div>
             <p className="font-display text-3xl font-bold mt-3">
@@ -176,7 +209,13 @@ export default async function HorizonPage() {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-text-muted">Revalorización</p>
+              <p className="flex items-center gap-1 text-xs text-text-muted">
+                Revalorización
+                <InfoTooltip
+                  size="xs"
+                  text="Es el valor actualizado de lo que ya tienen menos lo que efectivamente destinaste a vivienda. No es dinero disponible: muestra cómo creció el valor de su porcentaje al actualizarse la casa."
+                />
+              </p>
               <TrendingUp className="h-4 w-4 text-accent-green" />
             </div>
             <p className="font-mono tabular-nums text-2xl font-semibold text-accent-green mt-3">
@@ -224,8 +263,20 @@ export default async function HorizonPage() {
             className="rounded-2xl border border-[var(--border)] bg-bg-card p-4"
           >
             <Icon className={`h-4 w-4 ${color}`} />
-            <p className="text-[10px] uppercase tracking-wider text-text-muted mt-3">
+            <p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-text-muted mt-3">
               {label}
+              <InfoTooltip
+                size="xs"
+                text={
+                  label === 'Total pagado'
+                    ? 'La suma de todos los pagos registrados a Horizonte, incluidos los gastos del período.'
+                    : label === 'A vivienda'
+                      ? 'La parte de cada pago que queda después de descontar gastos. Es la que compra porcentaje del plan.'
+                      : label === 'Gastos'
+                        ? 'Seguros, administración, A.M.A.C., cuotas sociales y otros conceptos. Mantienen el plan al día y suman antigüedad, pero no compran porcentaje.'
+                        : 'El valor de hoy del porcentaje cancelado en el plan actual, según la última lista cargada.'
+                }
+              />
             </p>
             <p
               className={`font-mono tabular-nums text-sm sm:text-base font-medium mt-1 ${color}`}
