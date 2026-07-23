@@ -12,7 +12,10 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
   const path = req.nextUrl.pathname
   const isAuthRoute =
-    path.startsWith('/api/auth') || path === '/login' || path === '/auth/error'
+    path.startsWith('/api/auth') ||
+    path === '/api/cron/recurring-incomes' ||
+    path === '/login' ||
+    path === '/auth/error'
 
   if (!isLoggedIn && !isAuthRoute) {
     return Response.redirect(new URL('/login', req.nextUrl))
