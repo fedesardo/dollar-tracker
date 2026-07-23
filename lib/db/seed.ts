@@ -1,5 +1,5 @@
 import { db } from './index'
-import { wallets } from './schema'
+import { wallets, recurringIncomes } from './schema'
 import { sql } from 'drizzle-orm'
 
 async function seed() {
@@ -7,7 +7,7 @@ async function seed() {
 
   // Wipe domain data (NOT auth tables)
   await db.execute(
-    sql`TRUNCATE TABLE transaction_legs, transactions, loans, wallets, monthly_snapshots, goals RESTART IDENTITY CASCADE`,
+    sql`TRUNCATE TABLE transaction_legs, transactions, loans, wallets, monthly_snapshots, goals, recurring_incomes RESTART IDENTITY CASCADE`,
   )
 
   const walletRows = await db
@@ -42,6 +42,19 @@ async function seed() {
       },
     ])
     .returning()
+
+  const wiseFlor = walletRows.find((w) => w.name === 'Wise Flor')
+  if (wiseFlor) {
+    await db.insert(recurringIncomes).values({
+      description: 'Sueldo Flor',
+      beneficiary: 'flor',
+      walletId: wiseFlor.id,
+      amountUsd: '2200.00',
+      dayOfMonth: 21,
+      isActive: true,
+    })
+    console.log('✅ Regla "Sueldo Flor" creada (día 21, USD 2200, Wise Flor).')
+  }
 
   console.log(`✅ Created ${walletRows.length} wallets en cero.`)
   console.log('ℹ Editá los saldos iniciales desde /settings con los valores reales.')

@@ -311,9 +311,16 @@ function Row({
         <TransactionBadge type={tx.type} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-text-primary truncate group-hover:text-white transition-colors">
-          {tx.description}
-        </p>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p className="text-sm text-text-primary truncate group-hover:text-white transition-colors">
+            {tx.description}
+          </p>
+          {tx.recurringIncomeId && (
+            <Badge variant="cyan" className="flex-shrink-0">
+              Auto
+            </Badge>
+          )}
+        </div>
         <p className="text-[11px] text-text-muted truncate">{involvedWallets}</p>
       </div>
       <div

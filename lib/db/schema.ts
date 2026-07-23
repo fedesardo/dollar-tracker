@@ -133,6 +133,7 @@ export const transactions = pgTable(
     category: varchar('category', { length: 50 }),
     notes: text('notes'),
     groupId: uuid('group_id'),
+    recurringIncomeId: uuid('recurring_income_id'),
     createdBy: text('created_by')
       .notNull()
       .references(() => users.id),
@@ -142,6 +143,7 @@ export const transactions = pgTable(
   (t) => ({
     dateIdx: index('transactions_date_idx').on(t.date),
     typeIdx: index('transactions_type_idx').on(t.type),
+    recurringIdx: index('transactions_recurring_idx').on(t.recurringIncomeId),
   }),
 )
 
@@ -203,6 +205,22 @@ export const monthlySnapshots = pgTable('monthly_snapshots', {
   avgRate: decimal('avg_rate', { precision: 10, scale: 4 }),
   blueClose: decimal('blue_close', { precision: 10, scale: 4 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const recurringIncomes = pgTable('recurring_incomes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  description: varchar('description', { length: 200 }).notNull(),
+  beneficiary: ownerEnum('beneficiary').notNull(),
+  walletId: uuid('wallet_id')
+    .notNull()
+    .references(() => wallets.id),
+  amountUsd: decimal('amount_usd', { precision: 12, scale: 2 }).notNull(),
+  dayOfMonth: integer('day_of_month').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  notes: text('notes'),
+  lastRunOn: date('last_run_on'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
 export const goals = pgTable('goals', {
@@ -334,6 +352,8 @@ export type NewLoan = typeof loans.$inferInsert
 export type MonthlySnapshot = typeof monthlySnapshots.$inferSelect
 export type Goal = typeof goals.$inferSelect
 export type NewGoal = typeof goals.$inferInsert
+export type RecurringIncome = typeof recurringIncomes.$inferSelect
+export type NewRecurringIncome = typeof recurringIncomes.$inferInsert
 export type HorizonPlan = typeof horizonPlans.$inferSelect
 export type NewHorizonPlan = typeof horizonPlans.$inferInsert
 export type HorizonValuation = typeof horizonValuations.$inferSelect

@@ -12,11 +12,18 @@ import { InsightPanel } from '@/components/dashboard/InsightPanel'
 import { EvolutionChart } from '@/components/dashboard/EvolutionChart'
 import { QuickActions } from '@/components/dashboard/QuickActions'
 import { QuickSalaryPrompt } from '@/components/dashboard/QuickSalaryPrompt'
+import { runDueRecurringIncomes } from '@/lib/services/recurringIncomes'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function DashboardPage() {
+  try {
+    await runDueRecurringIncomes()
+  } catch (err) {
+    console.error('[dashboard] recurring-incomes fallback failed', err)
+  }
+
   const [wallets, txs, loans, rates, monthlyBlue, blueHistoryRaw] = await Promise.all([
     getActiveWallets(),
     getAllTransactionsWithLegs(),
