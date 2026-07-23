@@ -96,6 +96,9 @@ El modelo es **double-entry-style**: una transacción tiene metadatos + N legs (
 - **`loans`** — préstamos otorgados. **DEBE tener `transactionId`** apuntando a una `transactions` de tipo `loan_out`. Hoy puede haber préstamos con `transactionId: null` (legacy del seed viejo) — son inconsistencia que se debe corregir, no diseño aceptado.
 - **`goals`** — metas de ahorro.
 - **`monthly_snapshots`** — preparada pero no se usa todavía (sería cache mensual para acelerar dashboards).
+- **`horizon_plans`, `horizon_valuations`, `horizon_contributions`** — módulo
+  Casita Horizonte en ARS. Es un dominio paralelo: jamás debe crear
+  `transactions` ni `transaction_legs`, y nunca se suma al patrimonio USD.
 - **`user/account/session/verificationToken`** — Auth.js + DrizzleAdapter.
 
 ### Reglas contables por tipo de transacción

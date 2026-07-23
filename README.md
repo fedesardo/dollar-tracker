@@ -107,6 +107,7 @@ app/
 │  ├─ analysis/          # cotización promedio + simulador
 │  ├─ loans/             # préstamos
 │  ├─ portfolio/         # distribución + proyección
+│  ├─ horizon/           # Casita Horizonte (ARS, independiente de wallets USD)
 │  ├─ stats/             # tabla mensual + categorías
 │  └─ goals/             # metas
 ├─ (auth)/login          # /login
@@ -154,6 +155,15 @@ Cada `transaction` tiene 0..N `transaction_legs` que describen movimientos atóm
 | `loan_in`  | 1+ IN + actualiza `loans.amountPaid` y `status`           |
 
 Saldo de wallet = `initialBalance + Σ legs IN − Σ legs OUT` (calculado en runtime, jamás persistido en `wallets`).
+
+### Casita Horizonte
+
+El módulo `/horizon` registra el plan de vivienda en ARS mediante tablas propias:
+`horizon_plans`, `horizon_valuations` y `horizon_contributions`.
+
+No crea transacciones ni legs y, por diseño, no modifica saldos, patrimonio ni
+estadísticas de ahorro en USD. El histórico inicial se importa de forma
+idempotente al abrir el módulo por primera vez.
 
 ---
 

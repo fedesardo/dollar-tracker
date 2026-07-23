@@ -10,6 +10,7 @@ import {
   Wallet,
   BarChart3,
   Target,
+  House,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -17,14 +18,25 @@ import { cn } from '@/lib/utils/cn'
 import { signOutAction } from '@/actions/auth'
 
 const items = [
-  { href: '/', label: 'Inicio', Icon: LayoutDashboard },
-  { href: '/transactions', label: 'Movimientos', Icon: ArrowLeftRight },
-  { href: '/analysis', label: 'Análisis', Icon: PieChart },
-  { href: '/loans', label: 'Préstamos', Icon: HandCoins },
-  { href: '/portfolio', label: 'Portfolio', Icon: Wallet },
-  { href: '/stats', label: 'Stats', Icon: BarChart3 },
-  { href: '/goals', label: 'Metas', Icon: Target },
-  { href: '/settings', label: 'Config', Icon: Settings },
+  { href: '/', label: 'Inicio', mobileLabel: 'Inicio', Icon: LayoutDashboard },
+  {
+    href: '/transactions',
+    label: 'Movimientos',
+    mobileLabel: 'Movimientos',
+    Icon: ArrowLeftRight,
+  },
+  { href: '/analysis', label: 'Análisis', mobileLabel: 'Análisis', Icon: PieChart },
+  { href: '/loans', label: 'Préstamos', mobileLabel: 'Préstamos', Icon: HandCoins },
+  {
+    href: '/horizon',
+    label: 'Casita Horizonte',
+    mobileLabel: 'Casita Horizonte',
+    Icon: House,
+  },
+  { href: '/portfolio', label: 'Portfolio', mobileLabel: 'Portfolio', Icon: Wallet },
+  { href: '/stats', label: 'Stats', mobileLabel: 'Stats', Icon: BarChart3 },
+  { href: '/goals', label: 'Metas', mobileLabel: 'Metas', Icon: Target },
+  { href: '/settings', label: 'Config', mobileLabel: 'Config', Icon: Settings },
 ]
 
 export function SidebarNav() {
@@ -78,7 +90,7 @@ export function BottomNav() {
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-bg-surface/95 backdrop-blur-xl">
       <div className="flex items-center justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {main.map(({ href, label, Icon }) => {
+        {main.map(({ href, mobileLabel, Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
@@ -90,7 +102,7 @@ export function BottomNav() {
               )}
             >
               <Icon className={cn('h-5 w-5', active && 'text-accent-green')} />
-              <span>{label}</span>
+              <span className="text-center leading-tight">{mobileLabel}</span>
             </Link>
           )
         })}

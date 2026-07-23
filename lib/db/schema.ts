@@ -12,6 +12,7 @@ import {
   primaryKey,
   pgEnum,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import type { AdapterAccount } from '@auth/core/adapters'
 
@@ -34,6 +35,14 @@ export const loanStatusEnum = pgEnum('loan_status', [
   'partially_paid',
   'paid',
   'written_off',
+])
+export const horizonValuationKindEnum = pgEnum('horizon_valuation_kind', [
+  'official_plan',
+  'target_home',
+])
+export const horizonPaymentMethodEnum = pgEnum('horizon_payment_method', [
+  'transfer',
+  'cash',
 ])
 
 // ───────────────── AUTH TABLES (Drizzle adapter) ─────────────────
@@ -207,6 +216,111 @@ export const goals = pgTable('goals', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+// Casita Horizonte is intentionally independent from USD wallets/transactions.
+// It tracks a cooperative plan in ARS and never creates transaction legs.
+export const horizonPlans = pgTable('horizon_plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 80 }).notNull().unique(),
+  name: varchar('name', { length: 120 }).notNull(),
+  provider: varchar('provider', { length: 120 }).notNull(),
+  memberNumber: varchar('member_number', { length: 40 }),
+  startedOn: date('started_on').notNull(),
+  officialTypology: varchar('official_typology', { length: 40 }).notNull(),
+  targetTypology: varchar('target_typology', { length: 40 }).notNull(),
+  targetDescription: varchar('target_description', { length: 200 }).notNull(),
+  targetLotSqm: integer('target_lot_sqm').notNull(),
+  openingSnapshotOn: date('opening_snapshot_on').notNull(),
+  openingOfficialPercentage: decimal('opening_official_percentage', {
+    precision: 10,
+    scale: 6,
+  }).notNull(),
+  pointsPerActiveMonth: decimal('points_per_active_month', {
+    precision: 6,
+    scale: 2,
+  })
+    .notNull()
+    .default('1.50'),
+  pointsPerPercentage: decimal('points_per_percentage', {
+    precision: 6,
+    scale: 2,
+  })
+    .notNull()
+    .default('2.00'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const horizonValuations = pgTable(
+  'horizon_valuations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    planId: uuid('plan_id')
+      .notNull()
+      .references(() => horizonPlans.id, { onDelete: 'cascade' }),
+    effectiveOn: date('effective_on').notNull(),
+    kind: horizonValuationKindEnum('kind').notNull(),
+    typology: varchar('typology', { length: 40 }).notNull(),
+    amountArs: decimal('amount_ars', { precision: 15, scale: 2 }).notNull(),
+    notes: text('notes'),
+    importKey: varchar('import_key', { length: 100 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    planKindDateIdx: uniqueIndex('horizon_valuations_plan_kind_date_idx').on(
+      t.planId,
+      t.kind,
+      t.effectiveOn,
+    ),
+    importKeyIdx: uniqueIndex('horizon_valuations_import_key_idx').on(t.importKey),
+  }),
+)
+
+export const horizonContributions = pgTable(
+  'horizon_contributions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    planId: uuid('plan_id')
+      .notNull()
+      .references(() => horizonPlans.id, { onDelete: 'cascade' }),
+    paidOn: date('paid_on').notNull(),
+    creditedOn: date('credited_on'),
+    grossAmountArs: decimal('gross_amount_ars', { precision: 15, scale: 2 }).notNull(),
+    expensesAmountArs: decimal('expenses_amount_ars', {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+    housingAmountArs: decimal('housing_amount_ars', {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+    officialHomeValueArs: decimal('official_home_value_ars', {
+      precision: 15,
+      scale: 2,
+    }),
+    acquiredPercentage: decimal('acquired_percentage', {
+      precision: 12,
+      scale: 8,
+    }),
+    paymentMethod: horizonPaymentMethodEnum('payment_method'),
+    transferFrom: varchar('transfer_from', { length: 120 }),
+    receiptReference: varchar('receipt_reference', { length: 120 }),
+    countsForSeniority: boolean('counts_for_seniority').notNull().default(true),
+    includedInOpeningSnapshot: boolean('included_in_opening_snapshot')
+      .notNull()
+      .default(false),
+    notes: text('notes'),
+    importKey: varchar('import_key', { length: 100 }),
+    createdBy: text('created_by').references(() => users.id),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    planDateIdx: index('horizon_contributions_plan_date_idx').on(t.planId, t.paidOn),
+    importKeyIdx: uniqueIndex('horizon_contributions_import_key_idx').on(t.importKey),
+  }),
+)
+
 // ───────────────── INFERRED TYPES ─────────────────
 
 export type Wallet = typeof wallets.$inferSelect
@@ -220,9 +334,17 @@ export type NewLoan = typeof loans.$inferInsert
 export type MonthlySnapshot = typeof monthlySnapshots.$inferSelect
 export type Goal = typeof goals.$inferSelect
 export type NewGoal = typeof goals.$inferInsert
+export type HorizonPlan = typeof horizonPlans.$inferSelect
+export type NewHorizonPlan = typeof horizonPlans.$inferInsert
+export type HorizonValuation = typeof horizonValuations.$inferSelect
+export type NewHorizonValuation = typeof horizonValuations.$inferInsert
+export type HorizonContribution = typeof horizonContributions.$inferSelect
+export type NewHorizonContribution = typeof horizonContributions.$inferInsert
 
 export type WalletType = (typeof walletTypeEnum.enumValues)[number]
 export type Owner = (typeof ownerEnum.enumValues)[number]
 export type TransactionType = (typeof transactionTypeEnum.enumValues)[number]
 export type LegDirection = (typeof legDirectionEnum.enumValues)[number]
 export type LoanStatus = (typeof loanStatusEnum.enumValues)[number]
+export type HorizonValuationKind = (typeof horizonValuationKindEnum.enumValues)[number]
+export type HorizonPaymentMethod = (typeof horizonPaymentMethodEnum.enumValues)[number]
