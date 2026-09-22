@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { TransactionBadge, transactionMeta } from '@/components/shared/TransactionBadge'
+import { TransactionBadge, transactionMeta, transactionAccentClasses } from '@/components/shared/TransactionBadge'
 import { IncomeForm, type IncomePrefill } from './forms/IncomeForm'
 import { ExpenseForm } from './forms/ExpenseForm'
 import { PurchaseForm } from './forms/PurchaseForm'
@@ -11,6 +11,7 @@ import { TransferForm } from './forms/TransferForm'
 import { CashOutForm } from './forms/CashOutForm'
 import { LoanOutForm } from './forms/LoanOutForm'
 import { LoanInForm } from './forms/LoanInForm'
+import { AdjustmentForm } from './forms/AdjustmentForm'
 import type { Wallet, Loan, TransactionType } from '@/lib/db/schema'
 import { cn } from '@/lib/utils/cn'
 
@@ -22,6 +23,7 @@ const types: { type: TransactionType; label: string }[] = [
   { type: 'cash_out', label: 'Extracción a físico' },
   { type: 'loan_out', label: 'Préstamo otorgado' },
   { type: 'loan_in', label: 'Cobro de préstamo' },
+  { type: 'adjustment', label: 'Ajuste de saldo' },
 ]
 
 export function TransactionModal({
@@ -34,6 +36,7 @@ export function TransactionModal({
   loanInPrefillId,
   avgHistoricalRate,
   avgFeePct,
+  walletBalances,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
@@ -44,6 +47,7 @@ export function TransactionModal({
   loanInPrefillId?: string
   avgHistoricalRate?: number | null
   avgFeePct?: number | null
+  walletBalances?: Record<string, number>
 }) {
   const [selected, setSelected] = useState<TransactionType | null>(initialType ?? null)
 
@@ -64,7 +68,7 @@ export function TransactionModal({
         <DialogHeader
           className={cn(
             'transition-colors duration-200 -mx-5 sm:-mx-6 -mt-2 sm:-mt-2 px-5 sm:px-6 pt-2 sm:pt-2 pb-3 border-b border-[var(--border)]',
-            meta && `bg-accent-${meta.variant}/5`,
+            meta && transactionAccentClasses(meta.variant).staticBg,
           )}
         >
           <DialogTitle>
@@ -91,6 +95,7 @@ export function TransactionModal({
               {types.map(({ type, label }) => {
                 const tm = transactionMeta(type)
                 const Icon = tm.Icon
+                const ac = transactionAccentClasses(tm.variant)
                 return (
                   <button
                     key={type}
@@ -98,13 +103,13 @@ export function TransactionModal({
                     onClick={() => setSelected(type)}
                     className={cn(
                       'group rounded-2xl border border-[var(--border)] p-4 text-left transition-all hover:border-[var(--border-hover)]',
-                      `hover:bg-accent-${tm.variant}/5`,
+                      ac.hoverBg,
                     )}
                   >
                     <div
                       className={cn(
                         'inline-flex h-10 w-10 items-center justify-center rounded-full mb-2',
-                        `bg-accent-${tm.variant}/10 text-accent-${tm.variant}`,
+                        ac.iconBox,
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -148,6 +153,13 @@ export function TransactionModal({
                   onDone={close}
                 />
               )}
+              {selected === 'adjustment' && (
+                <AdjustmentForm
+                  wallets={wallets}
+                  walletBalances={walletBalances ?? {}}
+                  onDone={close}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -172,5 +184,7 @@ function descFor(t: TransactionType): string {
       return 'Prestaron plata'
     case 'loan_in':
       return 'Les pagaron un préstamo'
+    case 'adjustment':
+      return 'Corregir un saldo desactualizado'
   }
 }

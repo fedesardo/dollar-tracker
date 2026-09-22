@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
 import { Amount } from '@/components/shared/Amount'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +34,7 @@ export type WalletCardData = {
 
 export function WalletCard({ data }: { data: WalletCardData }) {
   const { wallet, balance, prevBalance, history, blueRate, lastMovementAt } = data
+  const router = useRouter()
   const delta = balance - prevBalance
   const deltaPct = prevBalance !== 0 ? (delta / Math.abs(prevBalance)) * 100 : 0
   const positive = delta >= 0
@@ -48,7 +50,13 @@ export function WalletCard({ data }: { data: WalletCardData }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       whileHover={{ y: -2 }}
-      className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-bg-card p-5 transition-all hover:border-[var(--border-hover)]"
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/transactions?wallet=${wallet.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') router.push(`/transactions?wallet=${wallet.id}`)
+      }}
+      className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-bg-card p-3.5 transition-all hover:border-[var(--border-hover)] cursor-pointer"
       style={{
         borderLeft: `3px solid ${wallet.color}`,
         boxShadow: 'none',
@@ -60,17 +68,17 @@ export function WalletCard({ data }: { data: WalletCardData }) {
           boxShadow: `inset 0 0 60px ${wallet.color}10`,
         }}
       />
-      <div className="relative z-10 flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2.5">
+      <div className="relative z-10 flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
           <div
-            className="rounded-lg p-2 flex items-center justify-center"
+            className="rounded-lg p-1.5 flex items-center justify-center"
             style={{ background: `${wallet.color}20`, color: wallet.color }}
           >
-            <WalletIcon name={wallet.icon} className="h-4 w-4" />
+            <WalletIcon name={wallet.icon} className="h-3.5 w-3.5" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-text-primary">{wallet.name}</h3>
-            <Badge variant={typeVariant[wallet.type]} className="mt-1">
+            <Badge variant={typeVariant[wallet.type]} className="mt-0.5">
               {typeLabel[wallet.type]}
             </Badge>
           </div>
@@ -79,13 +87,13 @@ export function WalletCard({ data }: { data: WalletCardData }) {
       </div>
 
       <div className="relative z-10 space-y-1">
-        <Amount value={balance} size="lg" showPrefix={false} className="text-text-primary" />
+        <Amount value={balance} size="md" showPrefix={false} className="text-text-primary" />
         {blueRate && (
           <p className="text-[11px] text-text-muted">≈ {formatARS(balance * blueRate)}</p>
         )}
       </div>
 
-      <div className="relative z-10 mt-3 flex items-center justify-between text-xs">
+      <div className="relative z-10 mt-2 flex items-center justify-between text-xs">
         <span
           className={cn(
             'inline-flex items-center gap-1 font-mono tabular-nums',
@@ -98,7 +106,7 @@ export function WalletCard({ data }: { data: WalletCardData }) {
       </div>
 
       {history.length > 1 && (
-        <div className="relative z-10 mt-3 h-10 -mx-1">
+        <div className="relative z-10 mt-2 h-7 -mx-1">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={history} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
               <defs>
@@ -122,7 +130,7 @@ export function WalletCard({ data }: { data: WalletCardData }) {
       )}
 
       {stale && (
-        <Badge variant="orange" className="relative z-10 mt-3">
+        <Badge variant="orange" className="relative z-10 mt-2">
           ⚠ Capital inmovilizado
         </Badge>
       )}

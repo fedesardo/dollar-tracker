@@ -29,11 +29,13 @@ export function QuickActions({
   loans,
   avgHistoricalRate,
   avgFeePct,
+  walletBalances,
 }: {
   wallets: Wallet[]
   loans: Loan[]
   avgHistoricalRate: number | null
   avgFeePct: number | null
+  walletBalances?: Record<string, number>
 }) {
   const [open, setOpen] = useState(false)
   const [type, setType] = useState<TransactionType | null>(null)
@@ -76,6 +78,7 @@ export function QuickActions({
         initialType={type}
         avgHistoricalRate={avgHistoricalRate}
         avgFeePct={avgFeePct}
+        walletBalances={walletBalances}
       />
     </>
   )

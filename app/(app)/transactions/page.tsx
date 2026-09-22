@@ -6,15 +6,27 @@ import { TransactionFAB } from '@/components/transactions/TransactionFAB'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ArrowLeftRight } from 'lucide-react'
 import { toNumber } from '@/lib/utils/format'
+import { calcAllWalletBalances, type LegWithDirection } from '@/lib/utils/calculations'
 
 export const dynamic = 'force-dynamic'
 
-export default async function TransactionsPage() {
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ wallet?: string }>
+}) {
+  const { wallet: walletId } = await searchParams
   const [wallets, txs, loans] = await Promise.all([
     getActiveWallets(),
     getAllTransactionsWithLegs(),
     getAllLoans(),
   ])
+
+  const allLegs: LegWithDirection[] = txs.flatMap((t) =>
+    t.legs.map((l) => ({ walletId: l.walletId, direction: l.direction, amountUsd: l.amountUsd })),
+  )
+  const balances = calcAllWalletBalances(wallets, allLegs)
+  const walletBalances = Object.fromEntries(balances)
 
   // averages for prefills inside FAB
   let arsT = 0
@@ -47,6 +59,7 @@ export default async function TransactionsPage() {
           loans={loans}
           avgHistoricalRate={avgHistoricalRate}
           avgFeePct={avgFeePct}
+          walletBalances={walletBalances}
         />
       </div>
 
@@ -57,7 +70,7 @@ export default async function TransactionsPage() {
           description="Empezá registrando el primer movimiento del mes."
         />
       ) : (
-        <TransactionList transactions={txs} wallets={wallets} />
+        <TransactionList transactions={txs} wallets={wallets} initialWalletId={walletId} />
       )}
     </div>
   )

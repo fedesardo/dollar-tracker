@@ -14,6 +14,7 @@ import {
   cashOutSchema,
   loanOutSchema,
   loanInSchema,
+  adjustmentSchema,
   type IncomeInput,
   type UpdateIncomeInput,
   type ExpenseInput,
@@ -22,6 +23,7 @@ import {
   type CashOutInput,
   type LoanOutInput,
   type LoanInInput,
+  type AdjustmentInput,
 } from '@/lib/validations/transaction'
 
 type ActionResult<T = void> = { success: true; data?: T } | { success: false; error: string }
@@ -374,6 +376,42 @@ export async function createLoanIn(input: LoanInInput): Promise<ActionResult<{ i
         })
         .where(eq(loans.id, loan.id))
 
+      return created
+    })
+
+    revalidateAll()
+    return { success: true, data: { id: result.id } }
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Error desconocido' }
+  }
+}
+
+export async function createAdjustment(input: AdjustmentInput): Promise<ActionResult<{ id: string }>> {
+  try {
+    const userId = await requireUser()
+    const data = adjustmentSchema.parse(input)
+    const direction: 'in' | 'out' = data.deltaUsd > 0 ? 'in' : 'out'
+    const amount = Math.abs(data.deltaUsd)
+
+    const result = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(transactions)
+        .values({
+          date: data.date,
+          type: 'adjustment',
+          description: direction === 'in' ? 'Ajuste de saldo (+)' : 'Ajuste de saldo (−)',
+          amountUsd: amount.toFixed(2),
+          notes: data.notes ?? null,
+          createdBy: userId,
+        })
+        .returning({ id: transactions.id })
+
+      await tx.insert(transactionLegs).values({
+        transactionId: created.id,
+        walletId: data.walletId,
+        direction,
+        amountUsd: amount.toFixed(2),
+      })
       return created
     })
 

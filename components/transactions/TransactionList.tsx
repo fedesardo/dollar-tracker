@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { TransactionBadge, transactionMeta } from '@/components/shared/TransactionBadge'
+import { TransactionBadge, transactionMeta, transactionAccentClasses } from '@/components/shared/TransactionBadge'
 import { TransactionDetailModal } from './TransactionDetailModal'
 import type { Wallet, TransactionType } from '@/lib/db/schema'
 import type { TransactionWithLegs } from '@/lib/queries/transactions'
@@ -21,6 +21,7 @@ const ALL_TYPES: TransactionType[] = [
   'cash_out',
   'loan_out',
   'loan_in',
+  'adjustment',
 ]
 
 const PAGE_SIZE = 25
@@ -38,20 +39,26 @@ function netForTx(tx: TransactionWithLegs): { value: number; sign: 'in' | 'out' 
       return { value: toNumber(tx.amountUsd), sign: 'neutral' }
     case 'cash_out':
       return { value: toNumber(tx.feeUsd), sign: 'out' }
+    case 'adjustment':
+      return { value: toNumber(tx.amountUsd), sign: tx.legs[0]?.direction === 'out' ? 'out' : 'in' }
   }
 }
 
 export function TransactionList({
   transactions,
   wallets,
+  initialWalletId,
 }: {
   transactions: TransactionWithLegs[]
   wallets: Wallet[]
+  initialWalletId?: string
 }) {
   const [search, setSearch] = useState('')
   const [filterTypes, setFilterTypes] = useState<TransactionType[]>([])
-  const [filterWallets, setFilterWallets] = useState<string[]>([])
-  const [showFilters, setShowFilters] = useState(false)
+  const [filterWallets, setFilterWallets] = useState<string[]>(
+    initialWalletId ? [initialWalletId] : [],
+  )
+  const [showFilters, setShowFilters] = useState(!!initialWalletId)
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<TransactionWithLegs | null>(null)
 
@@ -142,6 +149,7 @@ export function TransactionList({
                     {ALL_TYPES.map((t) => {
                       const active = filterTypes.includes(t)
                       const meta = transactionMeta(t)
+                      const ac = transactionAccentClasses(meta.variant)
                       return (
                         <button
                           key={t}
@@ -153,7 +161,7 @@ export function TransactionList({
                           className={cn(
                             'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] border transition-colors',
                             active
-                              ? `bg-accent-${meta.variant}/10 border-accent-${meta.variant}/30 text-accent-${meta.variant}`
+                              ? ac.activeTag
                               : 'border-[var(--border)] text-text-secondary hover:text-text-primary',
                           )}
                         >

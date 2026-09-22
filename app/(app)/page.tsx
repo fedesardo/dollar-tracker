@@ -195,6 +195,7 @@ export default async function DashboardPage() {
         loans={loans}
         avgHistoricalRate={avgHistoricalRate}
         avgFeePct={avgFeePct}
+        walletBalances={Object.fromEntries(balances)}
       />
 
       {insights.length > 0 && <InsightPanel insights={insights} />}

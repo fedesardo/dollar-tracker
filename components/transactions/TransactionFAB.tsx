@@ -5,7 +5,7 @@ import { Plus, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { TransactionModal } from './TransactionModal'
-import { transactionMeta } from '@/components/shared/TransactionBadge'
+import { transactionMeta, transactionAccentClasses } from '@/components/shared/TransactionBadge'
 import type { Wallet, Loan, TransactionType } from '@/lib/db/schema'
 
 const ORDER: TransactionType[] = [
@@ -16,6 +16,7 @@ const ORDER: TransactionType[] = [
   'cash_out',
   'loan_out',
   'loan_in',
+  'adjustment',
 ]
 
 export function TransactionFAB({
@@ -23,11 +24,13 @@ export function TransactionFAB({
   loans,
   avgHistoricalRate,
   avgFeePct,
+  walletBalances,
 }: {
   wallets: Wallet[]
   loans: Loan[]
   avgHistoricalRate: number | null
   avgFeePct: number | null
+  walletBalances?: Record<string, number>
 }) {
   const [expanded, setExpanded] = useState(false)
   const [open, setOpen] = useState(false)
@@ -60,6 +63,7 @@ export function TransactionFAB({
               {ORDER.map((t, i) => {
                 const meta = transactionMeta(t)
                 const Icon = meta.Icon
+                const ac = transactionAccentClasses(meta.variant)
                 return (
                   <motion.button
                     key={t}
@@ -68,9 +72,9 @@ export function TransactionFAB({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ delay: i * 0.04 }}
-                    className={`flex items-center gap-2 rounded-full bg-bg-elevated border border-[var(--border)] px-3 py-2 shadow-xl bg-accent-${meta.variant}/10`}
+                    className={`flex items-center gap-2 rounded-full bg-bg-elevated border border-[var(--border)] px-3 py-2 shadow-xl ${ac.bubbleBg}`}
                   >
-                    <Icon className={`h-4 w-4 text-accent-${meta.variant}`} />
+                    <Icon className={`h-4 w-4 ${ac.iconText}`} />
                     <span className="text-xs text-text-primary font-medium">{meta.label}</span>
                   </motion.button>
                 )
@@ -96,6 +100,7 @@ export function TransactionFAB({
         initialType={type}
         avgHistoricalRate={avgHistoricalRate}
         avgFeePct={avgFeePct}
+        walletBalances={walletBalances}
       />
     </>
   )

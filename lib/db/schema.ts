@@ -28,6 +28,7 @@ export const transactionTypeEnum = pgEnum('transaction_type', [
   'cash_out',
   'loan_out',
   'loan_in',
+  'adjustment',
 ])
 export const legDirectionEnum = pgEnum('leg_direction', ['in', 'out'])
 export const loanStatusEnum = pgEnum('loan_status', [

@@ -127,6 +127,18 @@ export const loanOutSchema = z
   )
 export type LoanOutInput = z.infer<typeof loanOutSchema>
 
+// Adjustment — corregir el saldo de un bolsillo a su valor real
+export const adjustmentSchema = z.object({
+  date: dateSchema,
+  walletId: z.string().uuid(),
+  deltaUsd: z
+    .number({ invalid_type_error: 'Tiene que ser un número' })
+    .finite()
+    .refine((v) => Math.abs(v) > 0.005, 'El saldo real es igual al que ya tenés, no hace falta ajustar'),
+  notes: optionalNotes,
+})
+export type AdjustmentInput = z.infer<typeof adjustmentSchema>
+
 // Loan in — cobro
 export const loanInSchema = z
   .object({
