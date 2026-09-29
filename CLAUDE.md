@@ -99,6 +99,9 @@ El modelo es **double-entry-style**: una transacción tiene metadatos + N legs (
 - **`horizon_plans`, `horizon_valuations`, `horizon_contributions`** — módulo
   Casita Horizonte en ARS. Es un dominio paralelo: jamás debe crear
   `transactions` ni `transaction_legs`, y nunca se suma al patrimonio USD.
+- **`car_loans`, `car_loan_installments`** — módulo Préstamo BYD en ARS (`/car-loan`).
+  Dominio paralelo como Horizonte: no crea `transactions` ni entra al patrimonio USD.
+  Seguro de cada cuota = pagado − `creditInstallmentArs` (cuota fija francesa), nunca persistido.
 - **`user/account/session/verificationToken`** — Auth.js + DrizzleAdapter.
 
 ### Reglas contables por tipo de transacción

@@ -11,6 +11,7 @@ import {
   BarChart3,
   Target,
   House,
+  Car,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -31,6 +32,10 @@ const dollarItems = [
   { href: '/stats', label: 'Stats', mobileLabel: 'Stats', Icon: BarChart3 },
   { href: '/goals', label: 'Metas', mobileLabel: 'Metas', Icon: Target },
   { href: '/settings', label: 'Config', mobileLabel: 'Config', Icon: Settings },
+]
+
+const carItems = [
+  { href: '/car-loan', label: 'Préstamo BYD', mobileLabel: 'BYD', Icon: Car },
 ]
 
 const housingItems = [
@@ -80,10 +85,10 @@ export function SidebarNav() {
         </div>
         <div className="my-5 border-t border-[var(--border)]" />
         <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-          Vivienda
+          Vivienda y auto
         </p>
         <div className="space-y-1">
-          {housingItems.map(({ href, label, Icon }) => {
+          {[...housingItems, ...carItems].map(({ href, label, Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
@@ -118,7 +123,7 @@ export function SidebarNav() {
 
 export function BottomNav() {
   const pathname = usePathname()
-  const main = [...dollarItems.slice(0, 4), ...housingItems]
+  const main = [...dollarItems.slice(0, 4), ...housingItems, ...carItems]
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-bg-surface/95 backdrop-blur-xl">
       <div className="flex items-center justify-around px-2 pb-[env(safe-area-inset-bottom)]">

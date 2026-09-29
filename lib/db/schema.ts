@@ -340,6 +340,51 @@ export const horizonContributions = pgTable(
   }),
 )
 
+// Préstamo BYD is an ARS car loan tracked on its own. Like Horizonte, it never
+// creates transactions/legs and is never added to the USD patrimonio.
+export const carLoans = pgTable('car_loans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 80 }).notNull().unique(),
+  name: varchar('name', { length: 120 }).notNull(),
+  lender: varchar('lender', { length: 120 }).notNull(),
+  principalArs: decimal('principal_ars', { precision: 15, scale: 2 }).notNull(),
+  tnaPct: decimal('tna_pct', { precision: 6, scale: 3 }).notNull(),
+  totalInstallments: integer('total_installments').notNull(),
+  // Fixed French-system installment (capital + interest), without insurance.
+  creditInstallmentArs: decimal('credit_installment_ars', {
+    precision: 15,
+    scale: 2,
+  }).notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const carLoanInstallments = pgTable(
+  'car_loan_installments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    loanId: uuid('loan_id')
+      .notNull()
+      .references(() => carLoans.id, { onDelete: 'cascade' }),
+    number: integer('number').notNull(),
+    dueOn: date('due_on').notNull(),
+    // What the bank says the installment will be (credit + insurance).
+    expectedTotalArs: decimal('expected_total_ars', {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+    // What was really paid. Insurance = paid − fixed credit installment.
+    paidAmountArs: decimal('paid_amount_ars', { precision: 15, scale: 2 }),
+    paidOn: date('paid_on'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    loanNumberIdx: uniqueIndex('car_loan_installments_loan_number_idx').on(
+      t.loanId,
+      t.number,
+    ),
+  }),
+)
+
 // ───────────────── INFERRED TYPES ─────────────────
 
 export type Wallet = typeof wallets.$inferSelect
@@ -361,6 +406,9 @@ export type HorizonValuation = typeof horizonValuations.$inferSelect
 export type NewHorizonValuation = typeof horizonValuations.$inferInsert
 export type HorizonContribution = typeof horizonContributions.$inferSelect
 export type NewHorizonContribution = typeof horizonContributions.$inferInsert
+
+export type CarLoan = typeof carLoans.$inferSelect
+export type CarLoanInstallment = typeof carLoanInstallments.$inferSelect
 
 export type WalletType = (typeof walletTypeEnum.enumValues)[number]
 export type Owner = (typeof ownerEnum.enumValues)[number]
