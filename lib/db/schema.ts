@@ -15,6 +15,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import type { AdapterAccount } from '@auth/core/adapters'
+import type { CoverageMap } from '@/lib/utils/carInsurance'
 
 // ───────────────── ENUMS ─────────────────
 
@@ -392,6 +393,33 @@ export const carLoanInstallments = pgTable(
   }),
 )
 
+// Seguro del auto: la póliza vigente y las ofertas a comparar. Sólo informativo,
+// no genera movimientos ni entra en ningún saldo.
+export const carInsuranceKindEnum = pgEnum('car_insurance_kind', ['current', 'offer'])
+
+export const carInsurancePolicies = pgTable(
+  'car_insurance_policies',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    kind: carInsuranceKindEnum('kind').notNull(),
+    insurer: varchar('insurer', { length: 120 }).notNull(),
+    planName: varchar('plan_name', { length: 120 }).notNull(),
+    monthlyPremiumArs: decimal('monthly_premium_ars', { precision: 15, scale: 2 }),
+    validFrom: date('valid_from'),
+    validTo: date('valid_to'),
+    insuredSumArs: decimal('insured_sum_ars', { precision: 15, scale: 2 }),
+    notes: text('notes'),
+    // key del catálogo (lib/utils/carInsurance.ts) → { status, detail }
+    coverages: jsonb('coverages').$type<CoverageMap>().notNull().default({}),
+    importKey: varchar('import_key', { length: 100 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    importKeyIdx: uniqueIndex('car_insurance_policies_import_key_idx').on(t.importKey),
+  }),
+)
+
 // ───────────────── INFERRED TYPES ─────────────────
 
 export type Wallet = typeof wallets.$inferSelect
@@ -416,6 +444,7 @@ export type NewHorizonContribution = typeof horizonContributions.$inferInsert
 
 export type CarLoan = typeof carLoans.$inferSelect
 export type CarLoanInstallment = typeof carLoanInstallments.$inferSelect
+export type CarInsurancePolicy = typeof carInsurancePolicies.$inferSelect
 
 export type WalletType = (typeof walletTypeEnum.enumValues)[number]
 export type Owner = (typeof ownerEnum.enumValues)[number]

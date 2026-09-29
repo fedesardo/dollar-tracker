@@ -102,6 +102,9 @@ El modelo es **double-entry-style**: una transacción tiene metadatos + N legs (
 - **`car_loans`, `car_loan_installments`** — módulo Préstamo BYD en ARS (`/car-loan`).
   Dominio paralelo como Horizonte: no crea `transactions` ni entra al patrimonio USD.
   Seguro de cada cuota = pagado − `creditInstallmentArs` (cuota fija francesa), nunca persistido.
+- **`car_insurance_policies`** — póliza vigente (Mapfre) + ofertas a comparar en `/car-loan/seguro`.
+  Catálogo fijo de coberturas en `lib/utils/carInsurance.ts`; cada póliza guarda `coverages` jsonb.
+  Sólo informativo: no genera movimientos ni toca saldos.
 - **`user/account/session/verificationToken`** — Auth.js + DrizzleAdapter.
 
 ### Reglas contables por tipo de transacción
