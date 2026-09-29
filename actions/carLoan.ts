@@ -11,7 +11,7 @@ import {
   type CarLoanInsuranceInput,
   type CarLoanPaymentInput,
 } from '@/lib/validations/carLoan'
-import { and, eq, gte, isNull } from 'drizzle-orm'
+import { and, eq, gte, isNull, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 type ActionResult = { success: true } | { success: false; error: string }
@@ -99,12 +99,12 @@ export async function setCarLoanInsuranceFrom(
     await db.transaction(async (tx) => {
       const [loan] = await tx.select().from(carLoans).limit(1)
       if (!loan) throw new Error('Préstamo no encontrado')
-      const expected = (
-        Number(loan.creditInstallmentArs) + data.insuranceArs
-      ).toFixed(2)
       await tx
         .update(carLoanInstallments)
-        .set({ expectedTotalArs: expected, updatedAt: new Date() })
+        .set({
+          expectedTotalArs: sql`${loan.creditInstallmentArs}::numeric + ${carLoanInstallments.vatArs} + ${data.insuranceArs.toFixed(2)}::numeric`,
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(carLoanInstallments.loanId, loan.id),

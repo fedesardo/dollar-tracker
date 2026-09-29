@@ -41,10 +41,15 @@ export type CarLoanInstallmentView = {
   number: number
   dueOn: string
   expectedTotal: number
+  bankListedTotal: number
+  /** IVA sobre el interés de esta cuota. */
+  vat: number
+  /** Cuota fija + IVA: lo que pagarías si el seguro va aparte. */
+  creditTotal: number
   paidAmount: number | null
   paidOn: string | null
   isPaid: boolean
-  /** Seguro real si está pagada; estimado (esperada − crédito) si no. */
+  /** Seguro real si está pagada; estimado (esperada − crédito − IVA) si no. */
   insurance: number
   amortization: AmortizationRow
 }
@@ -68,15 +73,20 @@ export function calculateCarLoanMetrics(
       const isPaid = i.paidAmountArs !== null
       const paidAmount = isPaid ? Number(i.paidAmountArs) : null
       const expectedTotal = Number(i.expectedTotalArs)
+      const vat = Number(i.vatArs)
+      const creditTotal = round2(fixed + vat)
       return {
         id: i.id,
         number: i.number,
         dueOn: i.dueOn,
         expectedTotal,
+        bankListedTotal: Number(i.bankListedTotalArs),
+        vat,
+        creditTotal,
         paidAmount,
         paidOn: i.paidOn,
         isPaid,
-        insurance: round2((paidAmount ?? expectedTotal) - fixed),
+        insurance: round2((paidAmount ?? expectedTotal) - creditTotal),
         amortization: schedule[i.number - 1],
       }
     })
@@ -96,7 +106,7 @@ export function calculateCarLoanMetrics(
     totalCount: loan.totalInstallments,
     totalPaid: paid.reduce((s, r) => s + (r.paidAmount ?? 0), 0),
     insurancePaid: paid.reduce((s, r) => s + r.insurance, 0),
-    creditPaid: paid.length * fixed,
+    creditPaid: paid.reduce((s, r) => s + r.creditTotal, 0),
     outstandingCapital,
     remainingProjected: pending.reduce((s, r) => s + r.expectedTotal, 0),
     remainingInsuranceProjected: pending.reduce((s, r) => s + r.insurance, 0),

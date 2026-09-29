@@ -28,14 +28,14 @@ export default async function CarLoanPage() {
       value: metrics.creditPaid,
       Icon: Landmark,
       color: 'text-accent-blue',
-      tip: 'Cuota fija del sistema francés (capital + interés) por cada cuota pagada.',
+      tip: 'Cuota fija del sistema francés (capital + interés) más el IVA del 21% sobre el interés, por cada cuota pagada.',
     },
     {
       label: 'De seguro',
       value: metrics.insurancePaid,
       Icon: ShieldCheck,
       color: 'text-accent-orange',
-      tip: 'Lo que pagaste menos la cuota fija del crédito, cuota por cuota. Varía con la inflación.',
+      tip: 'Lo que pagaste menos el crédito con IVA, cuota por cuota. Varía con la inflación.',
     },
     {
       label: 'Falta pagar (est.)',
@@ -100,7 +100,7 @@ export default async function CarLoanPage() {
                 Cuota fija del crédito
                 <InfoTooltip
                   size="xs"
-                  text={`Sistema francés, ${Number(loan.tnaPct).toLocaleString('es-AR')}% TNA, ${loan.totalInstallments} cuotas sobre ${formatARS(loan.principalArs)}. Es la parte que no cambia; lo que pagás de más es seguro.`}
+                  text={`Sistema francés, ${Number(loan.tnaPct).toLocaleString('es-AR')}% TNA, ${loan.totalInstallments} cuotas sobre ${formatARS(loan.principalArs)}. Es la parte que no cambia. A eso se suma el IVA (21% del interés) y el seguro.`}
                 />
               </p>
               <p className="font-mono tabular-nums text-xl mt-1">
@@ -150,14 +150,13 @@ export default async function CarLoanPage() {
         <CardHeader>
           <CardTitle>Cuotas</CardTitle>
           <p className="text-xs text-text-muted mt-1">
-            Al pagar cargás lo que salió realmente; la diferencia con la cuota fija es el
+            Al pagar cargás lo que salió realmente; la diferencia con crédito + IVA es el
             seguro del mes.
           </p>
         </CardHeader>
         <CardContent className="p-0">
           <CarLoanInstallments
             rows={metrics.rows}
-            fixedInstallment={metrics.fixedInstallment}
             asOf={asOf}
           />
         </CardContent>

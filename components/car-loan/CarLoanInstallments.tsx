@@ -28,11 +28,9 @@ type Mode = { kind: 'pay' | 'expected'; row: CarLoanInstallmentView } | null
 
 export function CarLoanInstallments({
   rows,
-  fixedInstallment,
   asOf,
 }: {
   rows: CarLoanInstallmentView[]
-  fixedInstallment: number
   asOf: string
 }) {
   const [mode, setMode] = useState<Mode>(null)
@@ -47,7 +45,8 @@ export function CarLoanInstallments({
   }
 
   const amountNumber = Number(amount) || 0
-  const insurancePreview = amountNumber - fixedInstallment
+  const creditTotal = mode?.row.creditTotal ?? 0
+  const insurancePreview = amountNumber - creditTotal
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -161,13 +160,18 @@ export function CarLoanInstallments({
                   <p className="font-mono tabular-nums text-xs sm:text-sm mt-1">
                     {formatARS(row.paidAmount ?? row.expectedTotal, { decimals: true })}
                   </p>
+                  {!row.isPaid && row.expectedTotal !== row.bankListedTotal && (
+                    <p className="text-[10px] text-text-muted mt-0.5">
+                      Banco: {formatARS(row.bankListedTotal, { decimals: true })}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted">
-                    Crédito
+                    Crédito + IVA
                   </p>
                   <p className="font-mono tabular-nums text-xs sm:text-sm mt-1 text-text-secondary">
-                    {formatARS(fixedInstallment, { decimals: true })}
+                    {formatARS(row.creditTotal, { decimals: true })}
                   </p>
                 </div>
                 <div>
@@ -194,7 +198,7 @@ export function CarLoanInstallments({
             </DialogTitle>
             <DialogDescription>
               {mode?.kind === 'pay'
-                ? 'Lo que pagaste menos la cuota fija del crédito es el seguro del mes.'
+                ? 'Lo que pagaste menos el crédito (cuota fija + IVA) es el seguro del mes.'
                 : 'Cargá lo que te informa el banco. El seguro estimado se recalcula solo.'}
             </DialogDescription>
           </DialogHeader>
@@ -236,7 +240,7 @@ export function CarLoanInstallments({
               </p>
               <p className="text-xs text-text-muted mt-1">
                 {formatARS(amountNumber, { decimals: true })} −{' '}
-                {formatARS(fixedInstallment, { decimals: true })} de crédito.
+                {formatARS(creditTotal, { decimals: true })} de crédito con IVA.
               </p>
             </div>
             <div className="flex flex-col-reverse sm:flex-row gap-2">

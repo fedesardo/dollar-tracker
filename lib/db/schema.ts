@@ -367,7 +367,14 @@ export const carLoanInstallments = pgTable(
       .references(() => carLoans.id, { onDelete: 'cascade' }),
     number: integer('number').notNull(),
     dueOn: date('due_on').notNull(),
-    // What the bank says the installment will be (credit + insurance).
+    // Snapshot of the total the bank listed at load time. Never edited, so we
+    // can spot drifts if the bank changes the credit part later.
+    bankListedTotalArs: decimal('bank_listed_total_ars', { precision: 15, scale: 2 })
+      .notNull()
+      .default('0'),
+    // IVA (21%) on the interest of this installment, as listed by the bank.
+    vatArs: decimal('vat_ars', { precision: 15, scale: 2 }).notNull().default('0'),
+    // Editable expected total (credit + IVA + insurance).
     expectedTotalArs: decimal('expected_total_ars', {
       precision: 15,
       scale: 2,
