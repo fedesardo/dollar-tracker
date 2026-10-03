@@ -18,7 +18,7 @@ async function requireUser() {
   if (!session?.user?.id) throw new Error('No autenticado')
 }
 
-const revalidateAll = () => revalidatePath('/car-loan/seguro')
+const revalidateAll = () => revalidatePath('/car-loan')
 const fail = (error: unknown, fallback: string): ActionResult => ({
   success: false,
   error: error instanceof Error ? error.message : fallback,

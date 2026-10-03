@@ -1,13 +1,12 @@
-import Link from 'next/link'
 import { CalendarClock, Car, Landmark, ShieldCheck, Wallet } from 'lucide-react'
 import { getCarLoanDashboard } from '@/lib/queries/carLoan'
 import { formatARS, formatDateShort } from '@/lib/utils/format'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CarLoanActions } from '@/components/car-loan/CarLoanActions'
 import { CarLoanInstallments } from '@/components/car-loan/CarLoanInstallments'
+import { InsuranceSection } from '@/components/car-loan/InsuranceSection'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 
 export const dynamic = 'force-dynamic'
@@ -60,15 +59,7 @@ export default async function CarLoanPage() {
             {loan.lender} · {metrics.totalCount} cuotas el 28 de cada mes. Crédito fijo, seguro variable.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" asChild>
-            <Link href="/car-loan/seguro">
-              <ShieldCheck className="h-4 w-4" />
-              Ver póliza
-            </Link>
-          </Button>
-          <CarLoanActions nextNumber={metrics.next?.number ?? metrics.totalCount} />
-        </div>
+        <CarLoanActions nextNumber={metrics.next?.number ?? metrics.totalCount} />
       </div>
 
       <section className="relative overflow-hidden rounded-3xl border border-accent-purple/20 bg-bg-card p-5 sm:p-7">
@@ -171,6 +162,8 @@ export default async function CarLoanPage() {
           />
         </CardContent>
       </Card>
+
+      <InsuranceSection />
     </div>
   )
 }
