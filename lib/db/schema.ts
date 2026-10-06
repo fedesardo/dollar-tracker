@@ -420,6 +420,45 @@ export const carInsurancePolicies = pgTable(
   }),
 )
 
+// Estructura del hogar: los gastos fijos de la casa en ARS/USD. Sólo informativo,
+// no genera movimientos ni toca saldos. Cada concepto guarda su historial de
+// montos: un monto rige desde su mes hasta que se carga el siguiente.
+export const householdItems = pgTable('household_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: varchar('slug', { length: 80 }).unique(),
+  name: varchar('name', { length: 120 }).notNull(),
+  groupKey: varchar('group_key', { length: 20 }).notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('ARS'),
+  // Cada cuántos meses se paga (1 mensual, 4 cuatrimestral, 12 anual).
+  monthsPerCharge: integer('months_per_charge').notNull().default(1),
+  // 'car_loan': el monto sale del módulo Préstamo BYD, no se edita acá.
+  source: varchar('source', { length: 20 }),
+  notes: text('notes'),
+  active: boolean('active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const householdItemAmounts = pgTable(
+  'household_item_amounts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    itemId: uuid('item_id')
+      .notNull()
+      .references(() => householdItems.id, { onDelete: 'cascade' }),
+    // Primer día del mes desde el que rige el monto.
+    effectiveFrom: date('effective_from').notNull(),
+    amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    itemMonthIdx: uniqueIndex('household_item_amounts_item_month_idx').on(
+      t.itemId,
+      t.effectiveFrom,
+    ),
+  }),
+)
+
 // ───────────────── INFERRED TYPES ─────────────────
 
 export type Wallet = typeof wallets.$inferSelect
@@ -445,6 +484,8 @@ export type NewHorizonContribution = typeof horizonContributions.$inferInsert
 export type CarLoan = typeof carLoans.$inferSelect
 export type CarLoanInstallment = typeof carLoanInstallments.$inferSelect
 export type CarInsurancePolicy = typeof carInsurancePolicies.$inferSelect
+export type HouseholdItem = typeof householdItems.$inferSelect
+export type HouseholdItemAmount = typeof householdItemAmounts.$inferSelect
 
 export type WalletType = (typeof walletTypeEnum.enumValues)[number]
 export type Owner = (typeof ownerEnum.enumValues)[number]

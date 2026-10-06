@@ -105,6 +105,9 @@ El modelo es **double-entry-style**: una transacción tiene metadatos + N legs (
 - **`car_insurance_policies`** — póliza vigente (Mapfre) + ofertas a comparar en `/car-loan/seguro`.
   Catálogo fijo de coberturas en `lib/utils/carInsurance.ts`; cada póliza guarda `coverages` jsonb.
   Sólo informativo: no genera movimientos ni toca saldos.
+- **`household_items`, `household_item_amounts`** — Estructura del hogar (`/hogar`): gastos fijos
+  aproximados en ARS/USD. Cada monto rige desde su mes hasta que se carga el siguiente (historial).
+  Número orientativo, no control fino. Sólo informativo: no genera movimientos ni toca saldos.
 - **`user/account/session/verificationToken`** — Auth.js + DrizzleAdapter.
 
 ### Reglas contables por tipo de transacción

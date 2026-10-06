@@ -12,6 +12,7 @@ import {
   Target,
   House,
   Car,
+  ReceiptText,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -36,6 +37,10 @@ const dollarItems = [
 
 const carItems = [
   { href: '/car-loan', label: 'Préstamo BYD', mobileLabel: 'BYD', Icon: Car },
+]
+
+const householdItems = [
+  { href: '/hogar', label: 'Estructura del hogar', mobileLabel: 'Hogar', Icon: ReceiptText },
 ]
 
 const housingItems = [
@@ -88,7 +93,7 @@ export function SidebarNav() {
           Vivienda y auto
         </p>
         <div className="space-y-1">
-          {[...housingItems, ...carItems].map(({ href, label, Icon }) => {
+          {[...housingItems, ...carItems, ...householdItems].map(({ href, label, Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
