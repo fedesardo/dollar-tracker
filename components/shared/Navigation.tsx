@@ -40,7 +40,7 @@ const carItems = [
 ]
 
 const householdItems = [
-  { href: '/hogar', label: 'Estructura del hogar', mobileLabel: 'Hogar', Icon: ReceiptText },
+  { href: '/hogar', label: 'Gastos fijos casa', mobileLabel: 'Gastos fijos', Icon: ReceiptText },
 ]
 
 const housingItems = [
@@ -90,7 +90,7 @@ export function SidebarNav() {
         </div>
         <div className="my-5 border-t border-[var(--border)]" />
         <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-          Hogar y auto
+          Vivienda y auto
         </p>
         <div className="space-y-1">
           {[...householdItems, ...housingItems, ...carItems].map(({ href, label, Icon }) => {

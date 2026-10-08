@@ -14,7 +14,7 @@ export default async function HouseholdPage() {
         <div className="mb-2 flex items-center gap-2">
           <Badge variant="purple">Independiente de tus dólares</Badge>
         </div>
-        <h1 className="font-display text-2xl font-bold sm:text-3xl">Estructura del hogar</h1>
+        <h1 className="font-display text-2xl font-bold sm:text-3xl">Gastos fijos de la casa</h1>
         <p className="mt-1 text-sm text-text-muted">
           Lo fijo que necesitamos por mes para que la casa funcione. Un número aproximado,
           no un control de gastos.
