@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Link2, Pencil, Plus, SlidersHorizontal } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, Link2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   archiveHouseholdItem,
@@ -32,7 +32,8 @@ import type { HouseholdItemView } from '@/lib/queries/household'
 import {
   FREQUENCY_OPTIONS,
   HOUSEHOLD_GROUPS,
-  calculateStructure,
+  addMonths,
+  currentAmount,
   monthlyEquivalent,
   roundToThousand,
   toArs,
@@ -49,6 +50,27 @@ const monthLabel = (month: string) => {
   return formatMonthYear(year, m)
 }
 
+const shortMonth = (month: string) => {
+  const [year, m] = month.split('-').map(Number)
+  return new Date(year, m - 1, 1).toLocaleDateString('es-AR', {
+    month: 'short',
+    year: '2-digit',
+  })
+}
+
+const WINDOW = 6
+
+type Cell = { value: number | null; explicit: boolean }
+
+function cellAt(item: HouseholdItemView, month: string): Cell {
+  if (item.linkedByMonth) return { value: item.linkedByMonth[month] ?? null, explicit: true }
+  const point = currentAmount(item.history, month)
+  return {
+    value: point?.amount ?? null,
+    explicit: item.history.some((p) => p.effectiveFrom.slice(0, 7) === month),
+  }
+}
+
 export function HouseholdBoard({
   items,
   usdRate,
@@ -58,231 +80,197 @@ export function HouseholdBoard({
   usdRate: number
   month: string
 }) {
-  // Simulación: id → nuevo monto de cada cobro (0 = darse de baja). No se guarda.
-  const [simulated, setSimulated] = useState<Record<string, number>>({})
+  const [offset, setOffset] = useState(0)
+  const [simulated, setSimulated] = useState<Set<string>>(new Set())
   const [editing, setEditing] = useState<HouseholdItemView | null>(null)
   const [creating, setCreating] = useState(false)
 
-  const inputs = useMemo(
-    () =>
-      items.map((item) => ({
-        id: item.id,
-        currency: item.currency,
-        monthsPerCharge: item.monthsPerCharge,
-        amount: item.amount,
-      })),
-    [items],
+  const months = useMemo(
+    () => Array.from({ length: WINDOW }, (_, i) => addMonths(month, offset - 3 + i)),
+    [month, offset],
   )
-  const base = calculateStructure(inputs, usdRate)
-  const sim = calculateStructure(inputs, usdRate, simulated)
-  const saving = base.totalArs - sim.totalArs
-  const simulating = Object.keys(simulated).length > 0
 
-  const toggleSimulate = (item: HouseholdItemView) =>
+  const perMonthArs = (item: HouseholdItemView, m: string) => {
+    const { value } = cellAt(item, m)
+    return value === null
+      ? 0
+      : toArs(monthlyEquivalent(value, item.monthsPerCharge), item.currency, usdRate)
+  }
+  const sumFor = (list: HouseholdItemView[], m: string) =>
+    list.reduce((sum, item) => sum + perMonthArs(item, m), 0)
+  const missingFor = (m: string) =>
+    items.filter((item) => cellAt(item, m).value === null).length
+
+  const nowTotal = sumFor(items, month)
+  const nowMissing = missingFor(month)
+  const saving = sumFor(
+    items.filter((item) => simulated.has(item.id)),
+    month,
+  )
+
+  const toggleSimulate = (id: string) =>
     setSimulated((prev) => {
-      const next = { ...prev }
-      if (item.id in next) delete next[item.id]
-      else next[item.id] = 0
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-3xl border border-accent-purple/20 bg-bg-card p-5 sm:p-7">
-        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-accent-purple/10 blur-3xl" />
-        <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+      <Card>
+        <CardContent className="grid grid-cols-1 gap-5 p-5 sm:grid-cols-[1.2fr_0.8fr] sm:p-6">
           <div>
             <p className="flex items-center gap-1 text-xs uppercase tracking-wider text-text-secondary">
-              Lo que necesita la casa por mes
+              Lo que necesita la casa en {monthLabel(month)}
               <InfoTooltip
                 size="xs"
-                text="Suma aproximada de todos los conceptos. Lo que se paga cada varios meses se reparte por mes, y lo que está en dólares se pasa al blue de hoy. Es un número orientativo, no una cuenta al centavo."
+                text="Suma aproximada de la columna del mes. Lo que se paga cada varios meses se reparte por mes y lo que está en dólares se pasa al blue de hoy. Es un número orientativo, no una cuenta al centavo."
               />
             </p>
-            <p className="mt-4 font-mono text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">
-              ≈ {formatARS(roundToThousand(base.totalArs))}
+            <p className="mt-2 font-mono text-3xl font-bold tabular-nums sm:text-4xl">
+              ≈ {formatARS(roundToThousand(nowTotal))}
             </p>
-            <p className="mt-2 font-mono text-sm tabular-nums text-text-muted">
-              ≈ US$ {Math.round(base.totalUsd).toLocaleString('es-AR')} al blue de hoy ($
+            <p className="mt-1 font-mono text-sm tabular-nums text-text-muted">
+              ≈ US$ {Math.round(nowTotal / usdRate).toLocaleString('es-AR')} al blue de hoy ($
               {Math.round(usdRate).toLocaleString('es-AR')})
             </p>
-            {base.missing > 0 && (
-              <p className="mt-3 text-xs text-accent-yellow">
-                Falta cargar el monto de {base.missing}{' '}
-                {base.missing === 1 ? 'concepto' : 'conceptos'}: el número real es más alto.
+            {nowMissing > 0 && (
+              <p className="mt-2 text-xs text-accent-yellow">
+                Faltan {nowMissing} {nowMissing === 1 ? 'monto' : 'montos'} este mes (las
+                celdas con guion): el número real es más alto.
               </p>
             )}
           </div>
-
-          <div className="rounded-2xl border border-[var(--border)] bg-bg-elevated/70 p-5">
-            <p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-text-muted">
-              <SlidersHorizontal className="h-3 w-3" />
-              Si nos damos de baja
+          <div className="rounded-2xl border border-[var(--border)] bg-bg-elevated/60 p-4">
+            <p className="text-[10px] uppercase tracking-wider text-text-muted">
+              Si damos de baja lo tildado
             </p>
-            {simulating ? (
+            {simulated.size > 0 ? (
               <>
-                <p className="mt-2 font-mono text-2xl tabular-nums text-accent-green">
-                  −{formatARS(roundToThousand(saving))}
+                <p className="mt-1 font-mono text-xl tabular-nums text-accent-green">
+                  −{formatARS(roundToThousand(saving))} / mes
                 </p>
-                <p className="mt-1 font-mono text-xs tabular-nums text-text-muted">
-                  por mes · quedaría ≈ {formatARS(roundToThousand(sim.totalArs))}
+                <p className="font-mono text-xs tabular-nums text-text-muted">
+                  quedaría ≈ {formatARS(roundToThousand(nowTotal - saving))}
                 </p>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3"
-                  onClick={() => setSimulated({})}
+                  className="mt-2"
+                  onClick={() => setSimulated(new Set())}
                 >
-                  Limpiar simulación
+                  Limpiar
                 </Button>
               </>
             ) : (
-              <p className="mt-2 text-sm text-text-secondary">
-                Tocá “Simular” en cualquier concepto para ver cuánto se ahorra. No cambia
-                nada, es solo para probar.
+              <p className="mt-1 text-xs text-text-secondary">
+                Tildá conceptos en la última columna para ver cuánto se ahorra. No cambia
+                nada.
               </p>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3 sm:px-5">
+          <p className="text-xs text-text-muted">
+            Tocá un monto para cargarlo o cambiarlo. Rige desde ese mes hasta el próximo
+            cambio; lo apagado es el monto del mes anterior que sigue vigente.
+          </p>
+          <div className="flex flex-shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOffset((o) => o - 1)}
+              aria-label="Meses anteriores"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setOffset(0)}>
+              Hoy
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOffset((o) => o + 1)}
+              aria-label="Meses siguientes"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </section>
 
-      {HOUSEHOLD_GROUPS.map((group) => {
-        const rows = items.filter((item) => item.groupKey === group.id)
-        if (rows.length === 0) return null
-        const groupTotal = rows.reduce(
-          (sum, item) =>
-            sum +
-            (item.amount === null
-              ? 0
-              : toArs(monthlyEquivalent(item.amount, item.monthsPerCharge), item.currency, usdRate)),
-          0,
-        )
-        return (
-          <Card key={group.id}>
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3 sm:px-5">
-              <p className="font-display text-base font-semibold">{group.label}</p>
-              <p className="font-mono text-sm tabular-nums text-text-secondary">
-                ≈ {formatARS(roundToThousand(groupTotal))} / mes
-              </p>
-            </div>
-            <CardContent className="p-0">
-              <div className="divide-y divide-[var(--border)]">
-                {rows.map((item) => {
-                  const simValue = simulated[item.id]
-                  const isSim = item.id in simulated
-                  const perMonth =
-                    item.amount === null
-                      ? null
-                      : toArs(
-                          monthlyEquivalent(item.amount, item.monthsPerCharge),
-                          item.currency,
-                          usdRate,
-                        )
-                  const showPerMonth = item.currency === 'USD' || item.monthsPerCharge > 1
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border)] bg-bg-elevated/40">
+                <th className="sticky left-0 z-10 min-w-[200px] bg-bg-card px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-text-muted sm:px-5">
+                  Concepto
+                </th>
+                {months.map((m) => (
+                  <th
+                    key={m}
+                    className={`px-3 py-3 text-right text-[10px] font-semibold uppercase tracking-widest ${
+                      m === month ? 'text-accent-purple' : 'text-text-muted'
+                    }`}
+                  >
+                    {shortMonth(m)}
+                  </th>
+                ))}
+                <th className="px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+                  Simular
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {HOUSEHOLD_GROUPS.map((group) => {
+                const rows = items.filter((item) => item.groupKey === group.id)
+                if (rows.length === 0) return null
+                return (
+                  <GroupRows
+                    key={group.id}
+                    label={group.label}
+                    rows={rows}
+                    months={months}
+                    month={month}
+                    simulated={simulated}
+                    sumFor={sumFor}
+                    onEdit={setEditing}
+                    onToggleSimulate={toggleSimulate}
+                  />
+                )
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-[var(--border)] bg-bg-elevated/40">
+                <td className="sticky left-0 z-10 bg-bg-card px-4 py-3 text-sm font-semibold sm:px-5">
+                  Total por mes
+                </td>
+                {months.map((m) => {
+                  const missing = missingFor(m)
                   return (
-                    <div key={item.id} className="px-4 py-3.5 sm:px-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className={`text-sm font-medium ${isSim ? 'text-text-muted line-through' : ''}`}>
-                              {item.name}
-                            </p>
-                            {item.linked && (
-                              <Badge variant="blue">
-                                <Link2 className="h-2.5 w-2.5" />
-                                Préstamo BYD
-                              </Badge>
-                            )}
-                            {item.monthsPerCharge > 1 && (
-                              <Badge variant="muted">
-                                {FREQUENCY_OPTIONS.find((o) => o.months === item.monthsPerCharge)
-                                  ?.label ?? `Cada ${item.monthsPerCharge} meses`}
-                              </Badge>
-                            )}
-                          </div>
-                          {item.notes && (
-                            <p className="mt-0.5 text-[11px] text-text-muted">{item.notes}</p>
-                          )}
-                          {item.effectiveFrom && (
-                            <p className="mt-0.5 text-[11px] text-text-muted">
-                              Vigente desde {monthLabel(item.effectiveFrom.slice(0, 7))}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex flex-shrink-0 items-start gap-2">
-                          <div className="text-right">
-                            {item.amount === null ? (
-                              <Badge variant="yellow">Falta cargar</Badge>
-                            ) : (
-                              <>
-                                <p
-                                  className={`font-mono text-sm tabular-nums ${isSim ? 'text-text-muted line-through' : ''}`}
-                                >
-                                  {money(item.amount, item.currency)}
-                                </p>
-                                {showPerMonth && perMonth !== null && (
-                                  <p className="font-mono text-[11px] tabular-nums text-text-muted">
-                                    ≈ {formatARS(roundToThousand(perMonth))} / mes
-                                  </p>
-                                )}
-                              </>
-                            )}
-                          </div>
-                          {!item.linked && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditing(item)}
-                              aria-label={`Actualizar ${item.name}`}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-
-                      {item.amount !== null && (
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <Button
-                            variant={isSim ? 'secondary' : 'ghost'}
-                            size="sm"
-                            onClick={() => toggleSimulate(item)}
-                          >
-                            {isSim ? 'Dejar de simular' : 'Simular baja'}
-                          </Button>
-                          {isSim && (
-                            <label className="flex items-center gap-2 text-xs text-text-muted">
-                              o pasaría a costar
-                              <Input
-                                type="number"
-                                inputMode="decimal"
-                                min="0"
-                                step="0.01"
-                                value={simValue === 0 ? '' : String(simValue)}
-                                onChange={(event) =>
-                                  setSimulated((prev) => ({
-                                    ...prev,
-                                    [item.id]: Number(event.target.value) || 0,
-                                  }))
-                                }
-                                placeholder="0"
-                                className="h-8 w-28 font-mono tabular-nums"
-                                aria-label={`Nuevo monto de ${item.name}`}
-                              />
-                              {item.currency === 'USD' ? 'US$' : '$'}
-                            </label>
-                          )}
-                        </div>
+                    <td key={m} className="px-3 py-3 text-right align-top">
+                      <p className="font-mono text-sm font-semibold tabular-nums">
+                        ≈ {formatARS(roundToThousand(sumFor(items, m)))}
+                      </p>
+                      {missing > 0 && (
+                        <p className="text-[10px] text-accent-yellow">faltan {missing}</p>
                       )}
-                    </div>
+                    </td>
                   )
                 })}
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })}
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p className="px-4 py-3 text-[11px] text-text-muted sm:px-5">
+          Los dólares se pasan al blue de hoy en todos los meses. Lo que se paga cada varios
+          meses (como Apple anual) se reparte por mes en los totales.
+        </p>
+      </Card>
 
       <div>
         <Button variant="secondary" onClick={() => setCreating(true)}>
@@ -294,6 +282,183 @@ export function HouseholdBoard({
       <EditDialog item={editing} month={month} onClose={() => setEditing(null)} />
       <CreateDialog open={creating} month={month} onClose={() => setCreating(false)} />
     </>
+  )
+}
+
+function GroupRows({
+  label,
+  rows,
+  months,
+  month,
+  simulated,
+  sumFor,
+  onEdit,
+  onToggleSimulate,
+}: {
+  label: string
+  rows: HouseholdItemView[]
+  months: string[]
+  month: string
+  simulated: Set<string>
+  sumFor: (list: HouseholdItemView[], m: string) => number
+  onEdit: (item: HouseholdItemView) => void
+  onToggleSimulate: (id: string) => void
+}) {
+  return (
+    <>
+      <tr className="bg-bg-elevated/30">
+        <td className="sticky left-0 z-10 bg-bg-card px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted sm:px-5">
+          {label}
+        </td>
+        {months.map((m) => (
+          <td
+            key={m}
+            className="px-3 py-2 text-right font-mono text-[11px] tabular-nums text-text-muted"
+          >
+            ≈ {formatARS(roundToThousand(sumFor(rows, m)))}
+          </td>
+        ))}
+        <td />
+      </tr>
+      {rows.map((item) => {
+        const isSim = simulated.has(item.id)
+        return (
+          <tr key={item.id} className="border-b border-[var(--border)]">
+            <td className="sticky left-0 z-10 bg-bg-card px-4 py-2.5 sm:px-5">
+              <button
+                type="button"
+                onClick={() => onEdit(item)}
+                title={item.notes ?? 'Cambiar frecuencia o sacar de la lista'}
+                className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 text-left ${
+                  isSim ? 'text-text-muted line-through' : 'text-text-primary'
+                } hover:text-accent-purple`}
+              >
+                <span>{item.name}</span>
+                {item.linked && (
+                  <Badge variant="blue">
+                    <Link2 className="h-2.5 w-2.5" />
+                    Préstamo
+                  </Badge>
+                )}
+                {item.monthsPerCharge > 1 && (
+                  <Badge variant="muted">
+                    {FREQUENCY_OPTIONS.find((o) => o.months === item.monthsPerCharge)?.label ??
+                      `Cada ${item.monthsPerCharge} meses`}
+                  </Badge>
+                )}
+              </button>
+            </td>
+            {months.map((m) => (
+              <td key={m} className={`px-1 py-1 text-right ${m === month ? 'bg-accent-purple/5' : ''}`}>
+                <AmountCell item={item} month={m} cell={cellAt(item, m)} struck={isSim} />
+              </td>
+            ))}
+            <td className="px-3 py-2.5 text-center">
+              <input
+                type="checkbox"
+                checked={isSim}
+                onChange={() => onToggleSimulate(item.id)}
+                className="h-4 w-4 accent-[var(--green)]"
+                aria-label={`Simular baja de ${item.name}`}
+              />
+            </td>
+          </tr>
+        )
+      })}
+    </>
+  )
+}
+
+function AmountCell({
+  item,
+  month,
+  cell,
+  struck,
+}: {
+  item: HouseholdItemView
+  month: string
+  cell: Cell
+  struck: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [busy, setBusy] = useState(false)
+  const cancelled = useRef(false)
+
+  const text =
+    cell.value === null ? '—' : money(cell.value, item.linked ? 'ARS' : item.currency)
+  const tone = struck
+    ? 'text-text-muted line-through'
+    : cell.value === null
+      ? 'text-text-muted'
+      : cell.explicit
+        ? 'text-text-primary'
+        : 'text-text-muted'
+
+  if (item.linked) {
+    return (
+      <span className={`inline-block px-2 py-1.5 font-mono text-xs tabular-nums ${tone}`}>
+        {text}
+      </span>
+    )
+  }
+
+  const commit = async () => {
+    setEditing(false)
+    if (cancelled.current) return
+    const next = draft === '' ? null : Number(draft)
+    if (next === null || Number.isNaN(next) || next === cell.value) return
+    setBusy(true)
+    const result = await saveHouseholdItem({
+      itemId: item.id,
+      month,
+      amount: next,
+      monthsPerCharge: item.monthsPerCharge,
+    })
+    setBusy(false)
+    if (result.success) toast.success(`Anotado: ${item.name}.`)
+    else toast.error(result.error)
+  }
+
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        type="number"
+        inputMode="decimal"
+        min="0"
+        step="0.01"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') event.currentTarget.blur()
+          if (event.key === 'Escape') {
+            cancelled.current = true
+            event.currentTarget.blur()
+          }
+        }}
+        className="h-8 w-28 text-right font-mono text-xs tabular-nums"
+        aria-label={`${item.name} en ${monthLabel(month)}`}
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => {
+        cancelled.current = false
+        setDraft(cell.value === null ? '' : String(cell.value))
+        setEditing(true)
+      }}
+      className={`w-full rounded-lg px-2 py-1.5 text-right font-mono text-xs tabular-nums hover:bg-bg-elevated ${tone} ${
+        busy ? 'opacity-50' : ''
+      }`}
+    >
+      {text}
+    </button>
   )
 }
 

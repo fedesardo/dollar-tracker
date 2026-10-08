@@ -20,6 +20,8 @@ export type HouseholdItemView = {
   amount: number | null
   effectiveFrom: string | null
   history: AmountPoint[]
+  /** Cuota BYD: crédito + IVA por mes de vencimiento ('YYYY-MM'). */
+  linkedByMonth: Record<string, number> | null
 }
 
 export async function getHouseholdDashboard() {
@@ -50,6 +52,11 @@ export async function getHouseholdDashboard() {
     )
     const linked = item.source === 'car_loan'
     const current = linked ? null : currentAmount(history, month)
+    const linkedByMonth = linked
+      ? Object.fromEntries(
+          carLoan.metrics.rows.map((row) => [row.dueOn.slice(0, 7), row.creditTotal]),
+        )
+      : null
     return {
       id: item.id,
       name: item.name,
@@ -59,9 +66,12 @@ export async function getHouseholdDashboard() {
       linked,
       notes: item.notes,
       // Cuota BYD: crédito + IVA de la próxima cuota (el seguro va aparte).
-      amount: linked ? (carLoan.metrics.next?.creditTotal ?? 0) : (current?.amount ?? null),
+      amount: linked
+        ? (linkedByMonth?.[month] ?? carLoan.metrics.next?.creditTotal ?? 0)
+        : (current?.amount ?? null),
       effectiveFrom: current?.effectiveFrom ?? null,
       history,
+      linkedByMonth,
     }
   })
 

@@ -22,10 +22,10 @@ type Seed = {
 // Los montos en null los carga Fede desde la pantalla.
 const SEEDS: Seed[] = [
   { slug: 'expensas', name: 'Expensas', group: 'casa', amount: null },
-  { slug: 'agua', name: 'Agua (coop. Río Ceballos)', group: 'casa', amount: null },
+  { slug: 'agua', name: 'Agua (coop. Río Ceballos)', group: 'casa', amount: 27000 },
   { slug: 'gas', name: 'Gas (Ecogas)', group: 'casa', amount: null },
   { slug: 'epec', name: 'Epec (luz)', group: 'casa', amount: null },
-  { slug: 'internet', name: 'Internet (Artecom)', group: 'casa', amount: null },
+  { slug: 'internet', name: 'Internet (Artecom)', group: 'casa', amount: 47000 },
   { slug: 'municipalidad', name: 'Municipalidad', group: 'casa', amount: null, notes: 'Falta confirmar frecuencia y si es fijo o variable.' },
   { slug: 'rentas-cordoba', name: 'Rentas Córdoba', group: 'casa', amount: null, notes: 'Falta confirmar frecuencia y si es fijo o variable.' },
   {
@@ -36,7 +36,7 @@ const SEEDS: Seed[] = [
     previous: { '2026-09': 94000 },
     notes: 'Sube todos los meses: actualizalo cuando cambie.',
   },
-  { slug: 'celu-fede', name: 'Celu Fede', group: 'casa', amount: null },
+  { slug: 'celu-fede', name: 'Celu Fede', group: 'casa', amount: 35000 },
   { slug: 'celu-flor', name: 'Celu Flor (Tuenti)', group: 'casa', amount: null },
 
   {

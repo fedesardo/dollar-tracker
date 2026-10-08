@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { calculateStructure, currentAmount, monthlyEquivalent } from './household'
+import { addMonths, calculateStructure, currentAmount, monthlyEquivalent } from './household'
 
 test('el monto vigente es el último cuyo mes ya llegó', () => {
   const points = [
@@ -27,4 +27,9 @@ test('estructura: suma pesos y dólares, cuenta faltantes y simula bajas', () =>
   assert.equal(base.missing, 1)
   assert.equal(base.totalUsd, 200)
   assert.equal(calculateStructure(items, 1000, { b: 20 }).totalArs, 120000)
+})
+
+test('addMonths cruza años en ambos sentidos', () => {
+  assert.equal(addMonths('2026-11', 3), '2027-02')
+  assert.equal(addMonths('2026-02', -3), '2025-11')
 })

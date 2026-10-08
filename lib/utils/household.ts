@@ -24,6 +24,12 @@ export function monthOf(date: Date) {
   return date.toISOString().slice(0, 7)
 }
 
+/** Suma (o resta) meses a un 'YYYY-MM'. */
+export function addMonths(month: string, n: number) {
+  const [year, m] = month.split('-').map(Number)
+  return new Date(Date.UTC(year, m - 1 + n, 1)).toISOString().slice(0, 7)
+}
+
 /** Monto vigente en `month` ('YYYY-MM'): el último cuyo mes de inicio ya llegó. */
 export function currentAmount(points: AmountPoint[], month: string): AmountPoint | null {
   let best: AmountPoint | null = null
