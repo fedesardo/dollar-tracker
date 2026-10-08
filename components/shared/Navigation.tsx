@@ -40,7 +40,7 @@ const carItems = [
 ]
 
 const householdItems = [
-  { href: '/hogar', label: 'Gastos fijos casa', mobileLabel: 'Gastos fijos', Icon: ReceiptText },
+  { href: '/hogar', label: 'Estructura del hogar', mobileLabel: 'Hogar', Icon: ReceiptText },
 ]
 
 const housingItems = [
