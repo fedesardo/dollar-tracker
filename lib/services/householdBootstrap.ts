@@ -14,6 +14,8 @@ type Seed = {
   amount: number | null
   source?: 'car_loan'
   notes?: string
+  /** Montos anteriores (mes 'YYYY-MM' → monto) para arrancar con historial. */
+  previous?: Record<string, number>
 }
 
 // Catálogo inicial armado con la planilla y el resumen de la Visa (sep-2026).
@@ -26,6 +28,14 @@ const SEEDS: Seed[] = [
   { slug: 'internet', name: 'Internet (Artecom)', group: 'casa', amount: null },
   { slug: 'municipalidad', name: 'Municipalidad', group: 'casa', amount: null, notes: 'Falta confirmar frecuencia y si es fijo o variable.' },
   { slug: 'rentas-cordoba', name: 'Rentas Córdoba', group: 'casa', amount: null, notes: 'Falta confirmar frecuencia y si es fijo o variable.' },
+  {
+    slug: 'alimento-perros',
+    name: 'Alimento perros (Molleja y Chorizo)',
+    group: 'casa',
+    amount: 100000,
+    previous: { '2026-09': 94000 },
+    notes: 'Sube todos los meses: actualizalo cuando cambie.',
+  },
   { slug: 'celu-fede', name: 'Celu Fede', group: 'casa', amount: null },
   { slug: 'celu-flor', name: 'Celu Flor (Tuenti)', group: 'casa', amount: null },
 
@@ -127,12 +137,23 @@ export async function ensureHouseholdInitialData() {
     .onConflictDoNothing()
     .returning({ id: householdItems.id, slug: householdItems.slug })
 
-  const amountBySlug = new Map(SEEDS.map((seed) => [seed.slug, seed.amount]))
+  const seedBySlug = new Map(SEEDS.map((seed) => [seed.slug, seed]))
   const amounts = inserted.flatMap((row) => {
-    const amount = amountBySlug.get(row.slug ?? '')
-    return amount === null || amount === undefined
-      ? []
-      : [{ itemId: row.id, effectiveFrom: '2026-10-01', amount: amount.toFixed(2) }]
+    const seed = seedBySlug.get(row.slug ?? '')
+    if (!seed) return []
+    const points = Object.entries(seed.previous ?? {}).map(([month, amount]) => ({
+      itemId: row.id,
+      effectiveFrom: `${month}-01`,
+      amount: amount.toFixed(2),
+    }))
+    if (seed.amount !== null) {
+      points.push({
+        itemId: row.id,
+        effectiveFrom: '2026-10-01',
+        amount: seed.amount.toFixed(2),
+      })
+    }
+    return points
   })
   if (amounts.length > 0) {
     await db.insert(householdItemAmounts).values(amounts).onConflictDoNothing()

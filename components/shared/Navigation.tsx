@@ -90,10 +90,10 @@ export function SidebarNav() {
         </div>
         <div className="my-5 border-t border-[var(--border)]" />
         <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-          Vivienda y auto
+          Hogar y auto
         </p>
         <div className="space-y-1">
-          {[...housingItems, ...carItems, ...householdItems].map(({ href, label, Icon }) => {
+          {[...householdItems, ...housingItems, ...carItems].map(({ href, label, Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
